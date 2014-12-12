@@ -1,0 +1,51 @@
+<?php
+/**
+ * @return mixed
+ */
+function program_of_study_schema() {
+  $schema['program_of_study'] = array(
+    'description' => t('The base table for tracking Program of Study pages.'),
+    'fields' => array(
+      'id' => array(
+        'description' => t('The primary identifier for program page.'),
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE
+      ),
+      'title' => array(
+        'description' => t('Title to use for the page.'),
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => ''
+      ),
+      'url' => array(
+        'description' => t('URL to scrape the program from.'),
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => ''
+      ),
+      'nid' => array(
+        'description' => t('The node ID in which the page was created with.'),
+        'type' => 'int',
+        'not null' => FALSE
+      ),
+      'msg' => array(
+        'description' => t('Any message needed to display in the configuration page.'),
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => ''
+      ),
+      'updated' => array(
+        'description' => t('UNIX timestamp of last cron update.'),
+        'type' => 'int',
+        'not null' => FALSE
+      )
+    ),
+    'primary key' => array('id'),
+  );
+
+  return $schema;
+}

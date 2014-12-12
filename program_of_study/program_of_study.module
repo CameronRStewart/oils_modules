@@ -1,0 +1,170 @@
+<?php
+/**
+ * @file
+ * A description of what your module does.
+ */
+
+
+/**
+ *  Implements hook_menu().
+ */
+function program_of_study_menu() {
+  $items = array();
+  $items['admin/config/services/program-of-study'] = array(
+    'title' => t('Program of Study Settings'),
+    'description' => 'Configure program of study pages to import into Drupal.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('program_of_study_admin_form'),
+    'access arguments' => array('administer program of study settings'),
+    'file' => 'program_of_study.admin_form.inc',
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['admin/config/services/program-of-study/settings'] = array(
+    'title' => t('Settings'),
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => 0,
+  );
+  $items['admin/config/services/program-of-study/remove'] = array(
+    'title' => t('Remove Programs'),
+    'type' => MENU_LOCAL_TASK,
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('program_of_study_remove_form'),
+    'access arguments' => array('administer program of study settings'),
+    'file' => 'program_of_study.remove_form.inc',
+    'weight' => 10,
+  );
+
+  return $items;
+}
+
+/**
+ *  Implements hook_permission().
+ */
+function program_of_study_permission() {
+  return array(
+    'administer program of study settings' => array(
+      'title' => t('Administer Program of Study configuration'),
+      'description' => t('Perform administration tasks on Program of Study module.'),
+    ),
+  );
+}
+
+/**
+ *
+ */
+function get_program_of_study() {
+  $result = db_query('SELECT * FROM program_of_study');
+  $msg = '';
+  foreach ($result as $row) {
+    //If it has been less than 24 hours, don't check for update
+    if ($row->updated > (strtotime('-1 day'))) {
+      continue;
+    }
+    //Flag for knowing whether to set updated col
+    $isUpdated = FALSE;
+    $body = getBodyText($row->url, $msg);
+    $fields = array();
+    if (!empty($row->nid)) {
+      $isUpdated = updateNode($row->nid, $row->title, $body);
+    }
+    else {
+      $nid = createNode($row->title, $body);
+      if (!empty($nid)) {
+        //Add new id to the database
+        $fields['nid'] = $nid;
+        $isUpdated = TRUE;
+      }
+      else {
+        $msg = 'Could not create node';
+      }
+    }
+    //Output any error messages to database
+    $fields['msg'] = $msg;
+
+    // If new node or body has changed, set new timestamp
+    if ($isUpdated) {
+      $fields['updated'] = time();
+    }
+
+    //Add nid if new page or refresh updated col
+    if (!empty($fields)) {
+      db_update('program_of_study')
+        ->fields($fields)
+        ->condition('id', $row->id)
+        ->execute();
+    }
+
+  }
+
+}
+
+/**
+ * @param $title
+ * @param $body
+ * @return mixed
+ * @throws Exception
+ */
+function createNode($title, $body) {
+  $node = new stdClass();
+  $node->type = 'page';
+  node_object_prepare($node); // Sets some default values.
+  $node->title = t($title);
+  $node->language = LANGUAGE_NONE;
+  $node->uid = 1;
+  $node->body[$node->language][0]['value'] = $body;
+  $node->body[$node->language][0]['summary'] = text_summary($body);
+  $node->body[$node->language][0]['format'] = 'full_html';
+
+  if ($node = node_submit($node)) { //Prepare node for saving.
+    node_save($node);
+  }
+
+  return $node->nid;
+}
+
+/**
+ * @param $nid
+ * @param $body
+ * @return bool
+ * @throws Exception
+ */
+function updateNode($nid, $title, $body) {
+  $node = node_load($nid);
+  //Check if body or title has changed
+  if ((strcmp($body, $node->body[$node->language][0]['value']) !== 0) || (strcmp($title, $node->title) !== 0)) {
+    $node->title = $title;
+    $node->body[$node->language][0]['value'] = $body;
+    node_save($node);
+    return TRUE;
+  }
+  else {
+    return FALSE;
+  }
+}
+
+/**
+ * @param $url
+ * @param $message
+ * @return string
+ */
+function getBodyText($url, &$message) {
+  $doc = new DOMDocument();
+  libxml_use_internal_errors(TRUE);
+  $success = $doc->loadHTMLFile($url);
+  if ($success) {
+    $body = $doc->saveXML($doc->getElementById('academic_program_program_description'));
+  }
+  else {
+    $body = '';
+    $message = 'Error in loading URL';
+  }
+
+  return $body;
+}
+
+/**
+ *  Implements hook_cron().
+ */
+function program_of_study_cron() {
+  get_program_of_study();
+}
