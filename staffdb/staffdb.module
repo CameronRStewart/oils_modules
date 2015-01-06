@@ -489,17 +489,17 @@ function check_employee($input, $location_vids) {
       $d_vid = $d_vline->vid;
     }
 
-    // Create an array to test values against
-    $d_result = taxonomy_get_tree($d_vid, $parent = 0, $max_depth = NULL, $load_entities = FALSE);
-    foreach ($d_result as $d_line) {
-      $d_array["$d_line->name"] = $d_line->tid;
-    }
-
     // Check against current values
     $d_tid = array();
+    $refresh = 1;
     foreach ($input["dept"] as $key => $d_val) {
+      if ($refresh == 1) {
+        $d_array = get_tids($d_vid);
+        $refresh = 0;
+      }
       if (!isset($d_array[$d_val]) || !is_numeric($d_array[$d_val])) {
         $d_tid[] = insert_tax_tid($d_vid, $d_val, 'taxonomy_term');
+        $refresh = 1;
       } else {
         $d_tid[] = $d_array[$d_val];
       }
@@ -517,17 +517,17 @@ function check_employee($input, $location_vids) {
       $s_vid = $s_vline->vid;
     }
 
-    // Create an array to test values against
-    $s_result = taxonomy_get_tree($s_vid, $parent = 0, $max_depth = NULL, $load_entities = FALSE);
-    foreach ($s_result as $s_line) {
-      $s_array["$s_line->name"] = $s_line->tid;
-    }
-
     // Check against current values
     $s_tid = array();
+    $refresh = 1;
     foreach ($input["subjects"] as $key => $sub_val) {
+      if ($refresh == 1) {
+        $s_array = get_tids($s_vid);
+        $refresh = 0;
+      }
       if (!isset($s_array[$sub_val]) || !is_numeric($s_array[$sub_val])) {
         $s_tid[] = insert_tax_tid($s_vid, $sub_val, 'taxonomy_term');
+        $refresh = 1;
       } else {
         $s_tid[] = $s_array[$sub_val];
       }
@@ -553,9 +553,15 @@ function check_employee($input, $location_vids) {
 
     // Check against current values
     $c_tid = array();
+    $refresh = 1;
     foreach ($input["classes"] as $key => $classes_val) {
+      if ($refresh == 1) {
+        $c_array = get_tids($c_vid);
+        $refresh = 0;
+      }
       if (!isset($c_array[$classes_val]) || !is_numeric($c_array[$classes_val])) {
         $c_tid[] = insert_tax_tid($c_vid, $classes_val, 'taxonomy_term');
+        $refresh = 1;
       } else {
         $c_tid[] = $c_array[$classes_val];
       }
@@ -573,17 +579,17 @@ function check_employee($input, $location_vids) {
       $r_vid = $r_vline->vid;
     }
 
-    // Create an array to test values against
-    $r_result = taxonomy_get_tree($r_vid, $parent = 0, $max_depth = NULL, $load_entities = FALSE);
-    foreach ($r_result as $r_line) {
-      $r_array["$r_line->name"] = $r_line->tid;
-    }
-
     // Check against current values
     $r_tid = array();
+    $refresh = 1;
     foreach ($input["research"] as $key => $research_val) {
+      if ($refresh == 1) {
+        $r_array = get_tids($r_vid);
+        $refresh = 0;
+      }
       if (!isset($r_array[$research_val]) || !is_numeric($r_array[$research_val])) {
         $r_tid[] = insert_tax_tid($r_vid, $research_val, 'taxonomy_term');
+        $refresh = 1;
       } else {
         $r_tid[] = $r_array[$research_val];
       }
@@ -601,17 +607,17 @@ function check_employee($input, $location_vids) {
       $w_vid = $w_vline->vid;
     }
 
-    // Create an array to test values against
-    $w_result = taxonomy_get_tree($w_vid, $parent = 0, $max_depth = NULL, $load_entities = FALSE);
-    foreach ($w_result as $w_line) {
-      $w_array["$w_line->name"] = $w_line->tid;
-    }
-
     // Check against current values
     $w_tid = array();
+    $refresh = 1;
     foreach ($input["field_web_sites"] as $key => $website_val) {
+      if ($refresh == 1) {
+        $w_array = get_tids($w_vid);
+        $refresh = 0;
+      }
       if (!isset($w_array[$website_val]) || !is_numeric($w_array[$website_val])) {
         $w_tid[] = insert_tax_tid($w_vid, $website_val, 'taxonomy_term');
+        $refresh = 1;
       } else {
         $w_tid[] = $w_array[$website_val];
       }
@@ -628,6 +634,17 @@ function check_employee($input, $location_vids) {
 
   // Save edits or new node
   $wrapper->save();
+}
+
+function get_tids($vid) {
+  // Set up variable
+  $array = array();
+  // Create an array to test values against
+  $result = taxonomy_get_tree($vid, $parent = 0, $max_depth = NULL, $load_entities = FALSE);
+  foreach ($result as $line) {
+    $array["$line->name"] = $line->tid;
+  }
+  return $array;
 }
 
 function check_locations($input, $remote_id) {
