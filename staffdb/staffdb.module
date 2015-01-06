@@ -226,10 +226,53 @@ function import_update_employees($args = NULL) {
 function start_import_update_employees() {
   $result = get_staff_info();
   $massaged_result = massage_employee_data($result);
-  $results_text = make_update_employee_content_type($massaged_result);
+  $results_add_update = make_update_employee_content_type($massaged_result);
+  $results_remove = delete_employee($massaged_result);
 
+  if (!empty($results_remove)) {
+    $deleted_list = implode(', ', $results_remove);
+    drupal_set_message(t("Removed from employee list: @deleted_list.", array('@deleted_list' => $deleted_list)), 'status');
+  }
 
+  $results_text = "";
   return $results_text;
+}
+
+function delete_employee($input) {
+  global $user;
+  // Pull all employee nids into array to check against
+  $nid_list_q = db_query('select nid, title from {node} n where n.type = \'employee\'');
+  foreach ($nid_list_q as $nline) {
+    $nid_list["$nline->title"] = $nline->nid;
+  }
+
+  // Remove records that are in $input
+  foreach ($input as $emp_id => $emp) {
+    $name_string = "";
+    if (isset($emp["first_name"])) {
+      $name_string .= $emp["first_name"];
+    }
+    if (isset($emp["middle_name"]) && $emp["middle_name"] != "") {
+      $name_string .= " " . $emp["middle_name"];
+    }
+    if (isset($emp["last_name"]) && $emp["last_name"] != "") {
+      $name_string .= " " . $emp["last_name"];
+    }
+    if (array_key_exists($name_string, $nid_list)) {
+      unset($nid_list[$name_string]);
+    }
+  }
+  // If any entries remain, they need to be deleted
+  $employees_deleted = array();
+  if (!empty($nid_list)) {
+    foreach ($nid_list as $key => $nid) {
+      if (is_numeric($nid)) {
+        $employees_deleted[] = $key;
+        node_delete($nid);
+      }
+    }
+  }
+  return $employees_deleted;
 }
 
 function make_update_employee_content_type($input) {
