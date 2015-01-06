@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the Employee Required Features feature.
+ */
+
+include_once 'employee_required_features.features.inc';
