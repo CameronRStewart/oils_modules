@@ -234,7 +234,8 @@ function start_import_update_employees() {
     drupal_set_message(t("Removed from employee list: @deleted_list.", array('@deleted_list' => $deleted_list)), 'status');
   }
 
-  $results_text = "";
+ // $results_text = "";
+  $results_text = print_r($results_add_update);
   return $results_text;
 }
 
@@ -493,7 +494,7 @@ function check_employee($input, $location_vids) {
     if (!isset($jt_array[$input["field_job_title"]]) || !is_numeric($jt_array[$input["field_job_title"]])) {
       $jt_tid = insert_tax_tid($jt_vid, $input["field_job_title"], 'taxonomy_term');
     } else {
-      $jt_tid = NULL;
+      $jt_tid = $jt_array[$input["field_job_title"]];
     }
   } else {
     $jt_tid = NULL;
@@ -512,12 +513,14 @@ function check_employee($input, $location_vids) {
     foreach ($fr_result as $fr_line) {
       $fr_array["$fr_line->name"] = $fr_line->tid;
     }
+    $pr = print_r($fr_array);
+    drupal_set_message(t("field_faculty_rank: @deleted_list.", array('@deleted_list' => $pr)), 'status');
 
     // Check against current values
     if (!isset($fr_array[$input["field_faculty_rank"]]) || !is_numeric($fr_array[$input["field_faculty_rank"]])) {
       $fr_tid = insert_tax_tid($fr_vid, $input["field_faculty_rank"], 'taxonomy_term');
     } else {
-      $fr_tid = NULL;
+      $fr_tid = $fr_array[$input["field_faculty_rank"]];
     }
   } else {
     $fr_tid = NULL;
@@ -803,4 +806,143 @@ function insert_tax_tid($vid, $term, $term_type) {
   return $wrapper->tid->value();
 }
 
+// Intercept the node save/create to update the remote db first
 
+/**
+ * @file
+ * Updates external employee database.
+ */
+/**
+ * Implements hook_node_presave().
+ */
+
+function staffdb_node_presave($node) {
+  return;
+  // For now, node must exist (was imported from employee db already);
+  // this means data can only be updated, not created
+  if ($node->type == 'employee' && $node->nid) {
+    // Create empty array to hold changed values: if not empty at end, update
+    $emp_base_change = array();
+    // Check if fields have changed & update if so
+    if ($node->title && $node->original->title && ($node->title != $node->original->title)) {
+      // If so, set var to indicate remote db needs updated
+      // Title does not need updated; it's a glom of the name fields
+    }
+    if ($node->field_remote_id) {
+      $remote_id = $node->field_remote_id['und'][0]['value'];
+    }
+    if ($node->field_first_name && $node->original->field_first_name && ($node->field_first_name['und'][0]['value'] != $node->original->field_first_name['und'][0]['value'])) {
+      $emp_base_change['first_name'] = $node->field_first_name['und'][0]['value'];
+    }
+    if ($node->field_middle_name && $node->original->field_middle_name && ($node->field_middle_name['und'][0]['value'] != $node->original->field_middle_name['und'][0]['value'])) {
+      $emp_base_change['middle_name'] = $node->field_middle_name['und'][0]['value'];
+    }
+    if ($node->field_last_name && $node->original->field_last_name && ($node->field_last_name['und'][0]['value'] != $node->original->field_last_name['und'][0]['value'])) {
+      $emp_base_change['last_name'] = $node->field_last_name['und'][0]['value'];
+    }
+    if ($node->field_email && $node->original->field_email && ($node->field_email['und'][0]['value'] != $node->original->field_email['und'][0]['value'])) {
+      $emp_base_change['email'] = $node->field_email['und'][0]['value'];
+    }
+    if ($node->field_visible && $node->original->field_visible && ($node->field_visible['und'][0]['value'] != $node->original->field_visible['und'][0]['value'])) {
+      $emp_base_change['visible'] = $node->field_visible['und'][0]['value'];
+    }
+    if ($node->field_research_guide_profile && $node->original->field_research_guide_profile && ($node->field_research_guide_profile['und'][0]['value'] != $node->original->field_research_guide_profile['und'][0]['value'])) {
+      $emp_base_change['rg_profile'] = $node->field_research_guide_profile['und'][0]['value'];
+    }
+    if ($node->field_picture && $node->original->field_picture && ($node->field_picture['und'][0]['value'] != $node->original->field_picture['und'][0]['value'])) {
+      $emp_base_change['picture'] = $node->field_picture['und'][0]['value'];
+    }
+    if ($node->field_dean_s_cabinet_member && $node->original->field_dean_s_cabinet_member && ($node->field_dean_s_cabinet_member['und'][0]['value'] != $node->original->field_dean_s_cabinet_member['und'][0]['value'])) {
+      $emp_base_change['codhead'] = $node->field_dean_s_cabinet_member['und'][0]['value'];
+    }
+    if ($node->field_currently_teaching && $node->original->field_currently_teaching && ($node->field_currently_teaching['und'][0]['value'] != $node->original->field_currently_teaching['und'][0]['value'])) {
+      $emp_base_change['current_teach'] = $node->field_currently_teaching['und'][0]['value'];
+    }
+    if ($node->field_ul_employee && $node->original->field_ul_employee && ($node->field_ul_employee['und'][0]['value'] != $node->original->field_ul_employee['und'][0]['value'])) {
+      $emp_base_change['ul_employee'] = $node->field_ul_employee['und'][0]['value'];
+    }
+    if ($node->field_oils_employee && $node->original->field_oils_employee && ($node->field_oils_employee['und'][0]['value'] != $node->original->field_oils_employee['und'][0]['value'])) {
+      $emp_base_change['oils_employee'] = $node->field_oils_employee['und'][0]['value'];
+    }
+    if ($node->field_cv_link && $node->original->field_cv_link && ($node->field_cv_link['und'][0]['value'] != $node->original->field_cv_link['und'][0]['value'])) {
+      $emp_base_change['cv_link'] = $node->field_cv_link['und'][0]['value'];
+    }
+    if ($node->body) {
+      if (isset($node->body['und'][0]['value'])) {
+        $new = $node->body['und'][0]['value'];
+      } else {
+        $new = "";
+      }
+      drupal_set_message(t('  New val: %mess.  ', array('%mess' => $new)), 'status');
+      if (isset($node->original->body['und'][0]['value'])) {
+        $old = $node->original->body['und'][0]['value'];
+      } else {
+        $old = "";
+      }
+      drupal_set_message(t('  Old val: %mess.  ', array('%mess' => $old)), 'status');
+      if ($new != $old) {
+        $emp_base_change['blurb'] = htmlentities($new, ENT_QUOTES, 'UTF-8');
+      }
+    }
+    /*
+    if ($node-> && $node->original-> && ($node-> != $node->original->)) {
+      $emp_base_change[''] = $node->['und'][0]['value'];
+    }
+    $mess = "";
+    foreach($emp_base_change as $one => $two) {
+      $mess .= "$one: $two\n";
+    }
+    */
+    
+  }
+  // Has basic info changed?  If so, update.
+  if (isset($emp_base_change) && !empty($emp_base_change)) {
+    $count = count($emp_base_change) - 1;
+    $iteration = 0;
+    $set_clause = "";
+    foreach ($emp_base_change as $field => $value) {
+      $set_clause .= " $field = '$value'";
+      if ($iteration < $count) {
+        $set_clause .= ", ";
+      }
+      $iteration++;
+    }
+    if ((isset($set_clause) && $set_clause != "") && (isset($remote_id) && is_numeric($remote_id))) {
+      $emp_base_q = "update {employee} set $set_clause where id = $remote_id";
+    }
+
+    // Set db connection
+    $dbcon = variable_get('staffdb_connection_name');
+    if (isset($dbcon) && $dbcon != "") {
+      db_set_active($dbcon);
+    }
+    else {
+      db_set_active('remote');
+    }
+
+    // Execute query
+    $result = db_query($emp_base_q);
+
+    // Revert to default db connection
+    db_set_active();
+
+    drupal_set_message(t('%mess.', array('%mess' => $emp_base_q)), 'status');
+  }
+}
+
+// fields:
+//
+// taxonomy-based fields:  field_job_title, field_faculty_rank,
+//
+// "" multiple value: field_department, field_subjects, field_classes, field_research_interests,
+//          field_web_sites
+//
+// entity reference:  field_physical_location
+
+// -----------------------------------------------------------------------------
+// To include files:
+// module_load_include('inc', 'content', 'includes/content.node_form')
+//
+// function module_load_include($type, $module, $name = NULL) -->
+//  $type = file extension; $module = module name; $name = path under module, including
+//  file name, but not extension
