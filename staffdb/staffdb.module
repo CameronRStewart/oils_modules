@@ -513,8 +513,6 @@ function check_employee($input, $location_vids) {
     foreach ($fr_result as $fr_line) {
       $fr_array["$fr_line->name"] = $fr_line->tid;
     }
-    $pr = print_r($fr_array);
-    drupal_set_message(t("field_faculty_rank: @deleted_list.", array('@deleted_list' => $pr)), 'status');
 
     // Check against current values
     if (!isset($fr_array[$input["field_faculty_rank"]]) || !is_numeric($fr_array[$input["field_faculty_rank"]])) {
