@@ -1,0 +1,49 @@
+<?php
+/**
+ * @file
+ * A description of what your module does.
+ */
+
+
+/**
+ *  Implements hook_menu().
+ */
+function course_info_menu() {
+    $items = array();
+    $items['admin/config/services/course_info'] = array(
+        'title' => t('OILS Course Information Settings'),
+        'description' => 'Configure URL of \'UNM Open Data\' for importing into Drupal.',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('course_info_admin_form'),
+        'access arguments' => array('administer OILS course info settings'),
+        'file' => 'course_info.admin_form.inc',
+        'type' => MENU_NORMAL_ITEM,
+    );
+    $items['admin/config/services/course_info/settings'] = array(
+        'title' => t('Settings'),
+        'type' => MENU_DEFAULT_LOCAL_TASK,
+        'weight' => 0,
+    );
+
+    return $items;
+}
+
+/**
+ *  Implements hook_permission().
+ */
+function course_info_permission() {
+    return array(
+        'administer course info settings' => array(
+            'title' => t('Administer OILS course info configuration'),
+            'description' => t('Perform administration tasks on OILS course info module.'),
+        ),
+    );
+}
+
+/**
+ * Grab unm courses information xml file.
+ * Parse, and place OILS relevent info into DB.
+ */
+function load_course_info_from_web() {
+
+}
