@@ -205,11 +205,254 @@ function program_of_study_schema() {
                 'not null' => FALSE,
                 'default' => '',
             ),
-            
+            'instructional-method-code' => array(
+                'description' => t('Code for instruction method used.'),
+                'type' => 'varchar',
+                'length' => 255,
+                'not null' => FALSE,
+                'default' => '',
+            ),
+            'instructional-method' => array(
+                'description' => t('Text description of instructional method'),
+                'type' => 'text',
+                'not null' => FALSE,
+                'default' => '',
+            ),
+            'delivery-type-code' => array(
+                'description' => t('Code for delivery type used.'),
+                'type' => 'varchar',
+                'length' => 255,
+                'not null' => FALSE,
+                'default' => '',
+            ),
+            'delivery-type' => array(
+                'description' => t('Text description of delivery type'),
+                'type' => 'varchar',
+                'length' => 255,
+                'not null' => FALSE,
+                'default' => '',
+            ),
+            'enrollment-max' => array(
+                'description' => t('Numerical value representing max capacity for this section.'),
+                'type' => 'int',
+                'not null' => FALSE,
+            ),
+            'enrollment' => array(
+                'description' => t('Current enrollment value in integer.'),
+                'type' => 'int',
+                'not null' => FALSE,
+            ),
+            'waitlist-max' => array(
+                'description' => t('Numerical value representing max capacity for this section\'s wait list.'),
+                'type' => 'int',
+                'not null' => FALSE,
+            ),
+            'waitlist' => array(
+                'description' => t('Current waitlist queue.'),
+                'type' => 'int',
+                'not null' => FALSE,
+            ),
+            'credits' => array(
+                'description' => t('Credits granted.'),
+                'type' => 'varchar',
+                'length' => 255,
+                'not null' => FALSE,
+                'default' => '',
+            ),
+            'fees' => array(
+                'description' => t('Fees required for this course.'),
+                'type' => 'varchar',
+                'length' => 255,
+                'not null' => FALSE,
+                'default' => '',
+            ),
+            'course_id' => array(
+                'description' => t('Foreign key pointing to course to which this section belongs.'),
+                'type' => 'int',
+                'not null' => TRUE,
+            ),
+
+        ),
+        'primary key' => array('id'),
+        // Foreign keys are apparently only for documentation in Drupal
+        'foreign keys' => array(
+            'course_id' => array(
+                'table' => 'courses_info_courses',
+                'columns' => array('id' => 'course_id')
+            ),
+        ),
+    );
+
+    $schema['courses_info_instructors'] = array(
+        'description' => t('The base table containing available sections for each course in OILS.'),
+        'fields' => array(
+            'id' => array(
+                'description' => t('The primary identifier for instructors.'),
+                'type' => 'serial',
+                'unsigned' => TRUE,
+                'not null' => TRUE,
+            ),
+            'first' => array(
+                'description' => t('Instructor\'s first name.'),
+                'type' => 'varchar',
+                'length' => 255,
+                'not null' => TRUE,
+                'default' => '',
+            ),
+            'last' => array(
+                'description' => t('Instructor\'s last name.'),
+                'type' => 'varchar',
+                'length' => 255,
+                'not null' => TRUE,
+                'default' => '',
+            ),
+            'middle_initial' => array(
+                'description' => t('Instructor\'s middle initial.'),
+                'type' => 'varchar',
+                'length' => 255,
+                'not null' => FALSE,
+                'default' => '',
+            ),
+            'email' => array(
+                'description' => t('Instructor\'s email address.'),
+                'type' => 'varchar',
+                'length' => 255,
+                'not null' => FALSE,
+                'default' => '',
+            ),
 
         ),
     );
 
+    $schema['courses_info_sections-instructors'] = array(
+        'description' => t('The base table containing instructor section pairs for each course in OILS.'),
+        'fields' => array(
+            'id' => array(
+                'description' => t('The primary identifier for section-instructors.'),
+                'type' => 'serial',
+                'unsigned' => TRUE,
+                'not null' => TRUE,
+            ),
+            'section_id' => array(
+                'description' => t('Foreign key pointing to section of this section instructors pair.'),
+                'type' => 'int',
+                'not null' => TRUE,
+            ),
+            'instructor_id' => array(
+                'description' => t('Foreign key pointing to instructor of this section instructors pair.'),
+                'type' => 'int',
+                'not null' => TRUE,
+            ),
+            'primary' => array(
+                'description' => t('Flag to determine if this instructor is the primary instructor for this section.'),
+                'type' => 'varchar',
+                'length' => 255,
+                'not null' => FALSE,
+                'default' => '',
+            ),
+        ),
+        'primary key' => array('id'),
+        // Foreign keys are apparently only for documentation in Drupal
+        'foreign keys' => array(
+            'section_id' => array(
+                'table' => 'courses_info_sections',
+                'columns' => array('id' => 'section_id')
+            ),
+            'instructor_id' => array(
+                'table' => 'courses_info_instructors',
+                'columns' => array('id' => 'instructor_id')
+            ),
+        ),
+    );
+
+    $schema['courses_info_meeting_times'] = array(
+        'description' => t('The base table containing meeting times for each section in OILS.'),
+        'fields' => array(
+            'id' => array(
+                'description' => t('The primary identifier for the meeting time column .'),
+                'type' => 'serial',
+                'unsigned' => TRUE,
+                'not null' => TRUE,
+            ),
+            'start-date' => array(
+                'description' => t('Date of the first day of class.'),
+                'type' => 'varchar',
+                'length' => 255,
+                'not null' => FALSE,
+                'default' => '',
+            ),
+            'end-date' => array(
+                'description' => t('Date of the last day of class.'),
+                'type' => 'varchar',
+                'length' => 255,
+                'not null' => FALSE,
+                'default' => '',
+            ),
+            'days' => array(
+                'description' => t('Days of the week this class takes place.'),
+                'type' => 'varchar',
+                'length' => 255,
+                'not null' => FALSE,
+                'default' => '',
+            ),
+            'start-time' => array(
+                'description' => t('Time class begins.'),
+                'type' => 'varchar',
+                'length' => 255,
+                'not null' => FALSE,
+                'default' => '',
+            ),
+            'end-time' => array(
+                'description' => t('Time class ends.'),
+                'type' => 'varchar',
+                'length' => 255,
+                'not null' => FALSE,
+                'default' => '',
+            ),
+            'bldg-code' => array(
+                'description' => t('Shorthand code for building this class takes place in.'),
+                'type' => 'varchar',
+                'length' => 255,
+                'not null' => FALSE,
+                'default' => '',
+            ),
+        ),
+        'primary key' => array('id'),
+    );
+
+    $schema['courses_info_sections-meeting_times'] = array(
+        'description' => t('The base table containing meeting time - section pairs for each course in OILS.'),
+        'fields' => array(
+            'id' => array(
+                'description' => t('The primary identifier for section-meet-time.'),
+                'type' => 'serial',
+                'unsigned' => TRUE,
+                'not null' => TRUE,
+            ),
+            'section_id' => array(
+                'description' => t('Foreign key pointing to section of this section instructors pair.'),
+                'type' => 'int',
+                'not null' => TRUE,
+            ),
+            'meeting_time_id' => array(
+                'description' => t('Foreign key pointing to meetingn time of this section meeting time pair.'),
+                'type' => 'int',
+                'not null' => TRUE,
+            ),
+        ),
+        'primary key' => array('id'),
+        // Foreign keys are apparently only for documentation in Drupal
+        'foreign keys' => array(
+            'section_id' => array(
+                'table' => 'courses_info_sections',
+                'columns' => array('id' => 'section_id')
+            ),
+            'meeting_time_id' => array(
+                'table' => 'courses_info_meeting_times',
+                'columns' => array('id' => 'meeting_time_id')
+            ),
+        ),
+    );
 
     return $schema;
 }
