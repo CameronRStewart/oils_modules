@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the OILS Content feature.
+ */
+
+include_once 'oils_content.features.inc';
