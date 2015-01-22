@@ -1,5 +1,16 @@
 <?php
 
+function get_remote_list($q) {
+  db_set_active('remote');
+  $result = db_query($q);
+  db_set_active();
+  $ids = array();
+  foreach ($result as $row) {
+    $ids[$row->name] = $row->id;
+  }
+  return $ids;
+}
+
 function makeDirectory($dirArray, $sort = NULL) {
 
   /*
