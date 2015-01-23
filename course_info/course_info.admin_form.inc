@@ -64,7 +64,6 @@ function course_info_admin_form_submit($form, &$form_state) {
     if(!$exists) {
         db_insert('courses_info_url')
             ->fields(array(
-                'title' => t('UNM Open Data URL'),
                 'url' => $saved_url,
             ))
             ->execute();
@@ -72,7 +71,6 @@ function course_info_admin_form_submit($form, &$form_state) {
     else {
         db_update('courses_info_url')
             ->fields(array(
-                'title' => t('UNM Open Data URL'),
                 'url' => $saved_url,
             ))
             ->condition('id', 1)
@@ -82,6 +80,6 @@ function course_info_admin_form_submit($form, &$form_state) {
     drupal_set_message('Changes saved.');
 
     //Grab UNM Course info file and parse into DB.
-    //load_course_info_from_web();
+    load_course_info_from_web();
 }
 

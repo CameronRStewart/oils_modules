@@ -1,19 +1,9 @@
 <?php
 
-/*
- * For this file we need to:
- *  - create courses_info_url table
- *    - id: int (10) , nn, unsigned
- *    - url: string(255), nn, default ''
- *    - updated: int(10)
- *  - create oils_courses_info table
- *    - ?
- */
-
 /**
  * @return mixed
  */
-function program_of_study_schema() {
+function course_info_schema() {
     $schema['courses_info_url'] = array(
         'description' => t('The base table for URL pointing to UNM Course info XML.'),
         'fields' => array(
@@ -130,11 +120,10 @@ function program_of_study_schema() {
                 'not null' => TRUE,
                 'default' => ''
             ),
-            'description' => array(
+            'course_description' => array(
                 'description' => t('Full catalog description of this course according to UNM records.'),
                 'type' => 'text',
                 'not null' => FALSE,
-                'default' => ''
             ),
             'subject_id' => array(
                 'description' => t('Foreign key pointing to subject to which this course belongs.'),
@@ -203,7 +192,6 @@ function program_of_study_schema() {
                 'description' => t('Any text specific to this section that needs to be conveyed.'),
                 'type' => 'text',
                 'not null' => FALSE,
-                'default' => '',
             ),
             'instructional-method-code' => array(
                 'description' => t('Code for instruction method used.'),
@@ -216,7 +204,6 @@ function program_of_study_schema() {
                 'description' => t('Text description of instructional method'),
                 'type' => 'text',
                 'not null' => FALSE,
-                'default' => '',
             ),
             'delivery-type-code' => array(
                 'description' => t('Code for delivery type used.'),
@@ -284,7 +271,7 @@ function program_of_study_schema() {
     );
 
     $schema['courses_info_instructors'] = array(
-        'description' => t('The base table containing available sections for each course in OILS.'),
+        'description' => t('The base table containing all instructors in OILS.'),
         'fields' => array(
             'id' => array(
                 'description' => t('The primary identifier for instructors.'),
@@ -293,28 +280,28 @@ function program_of_study_schema() {
                 'not null' => TRUE,
             ),
             'first' => array(
-                'description' => t('Instructor\'s first name.'),
+                'description' => t('Instructor first name.'),
                 'type' => 'varchar',
                 'length' => 255,
                 'not null' => TRUE,
                 'default' => '',
             ),
             'last' => array(
-                'description' => t('Instructor\'s last name.'),
+                'description' => t('Instructor last name.'),
                 'type' => 'varchar',
                 'length' => 255,
                 'not null' => TRUE,
                 'default' => '',
             ),
             'middle_initial' => array(
-                'description' => t('Instructor\'s middle initial.'),
+                'description' => t('Instructor middle initial.'),
                 'type' => 'varchar',
                 'length' => 255,
                 'not null' => FALSE,
                 'default' => '',
             ),
             'email' => array(
-                'description' => t('Instructor\'s email address.'),
+                'description' => t('Instructor\ email address.'),
                 'type' => 'varchar',
                 'length' => 255,
                 'not null' => FALSE,
@@ -322,9 +309,10 @@ function program_of_study_schema() {
             ),
 
         ),
+        'primary key' => array('id'),
     );
 
-    $schema['courses_info_sections-instructors'] = array(
+    $schema['courses_info_sections_instructors'] = array(
         'description' => t('The base table containing instructor section pairs for each course in OILS.'),
         'fields' => array(
             'id' => array(
@@ -343,7 +331,7 @@ function program_of_study_schema() {
                 'type' => 'int',
                 'not null' => TRUE,
             ),
-            'primary' => array(
+            'primary_instructor' => array(
                 'description' => t('Flag to determine if this instructor is the primary instructor for this section.'),
                 'type' => 'varchar',
                 'length' => 255,
@@ -420,7 +408,7 @@ function program_of_study_schema() {
         'primary key' => array('id'),
     );
 
-    $schema['courses_info_sections-meeting_times'] = array(
+    $schema['courses_info_sections_meeting_times'] = array(
         'description' => t('The base table containing meeting time - section pairs for each course in OILS.'),
         'fields' => array(
             'id' => array(

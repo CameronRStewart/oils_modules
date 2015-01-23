@@ -46,4 +46,43 @@ function course_info_permission() {
  */
 function load_course_info_from_web() {
 
+    $destination = 'public://';
+    // Grab URL of course data file
+    $url_result = db_query('SELECT * FROM courses_info_url');
+    $msg = '';
+    // There should only be one...
+    $reader = new XMLReader();
+    foreach ($url_result as $row) {
+        $file = system_retrieve_file($row->url, $destination, TRUE);
+        if($file) {
+            $reader->open($file->uri);
+            //while($reader->read() && ($reader->name !== 'college' && $reader->getAttribute('code') !== 'LL'));
+            while($reader->read()){
+                if ($reader->name == 'college' && $reader->getAttribute('code') == 'LL') {
+                    break;
+                }
+            }
+            dpm($reader->getAttribute('code'));
+            //while($reader->name === 'college') {
+            $data = new SimpleXMLElement($reader->readOuterXml());
+            //$reader->next('college');
+            //}
+            $data = drupal_json_decode(drupal_json_encode($data));
+            dpm($data);
+        }
+        else {
+            print_r("5");
+        }
+
+        //Add nid if new page or refresh updated col
+        //if (!empty($fields)) {
+        //   db_update('program_of_study')
+        //        ->fields($fields)
+        //        ->condition('id', $row->id)
+        //        ->execute();
+        //}
+
+    }
+
+
 }
