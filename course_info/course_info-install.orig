@@ -1,5 +1,61 @@
 <?php
 
+
+
+function course_info_install() {
+
+    /*
+     * Department
+     */
+
+    $department = array(
+      'type' => 'department',
+      'name' => $t('Department'),
+      'base' => 'department',
+      'description' => $t('This is a department within a college.'),
+    );
+    $content_type = node_type_set_defaults($department);
+    node_add_body_field($content_type);
+// Check if we create content type or update.
+    $status = node_type_save($content_type);
+// Replacement rule for the messages.
+    $t_args = array('%name' => $content_type->name);
+    if ($status == SAVED_UPDATED) { // update case
+        drupal_set_message($t('The content type %name has been updated.', $t_args));
+    }
+    elseif ($status == SAVED_NEW) { // create case
+        drupal_set_message($t('The content type %name has been added.', $t_args));
+        watchdog('node', 'Added content type %name.', $t_args, WATCHDOG_NOTICE, l($t('view'), 'admin/structure/types'));
+    }
+
+    /*
+     * Subject
+     */
+
+    /*
+     * Course
+     */
+
+    /*
+     * Section
+     */
+
+    /*
+     * Instructor
+     */
+
+    /*
+     * Meeting Times - widget?
+     */
+
+
+
+}
+
+function course_info_uninstall() {
+
+}
+
 /**
  * @return mixed
  */
@@ -444,3 +500,4 @@ function course_info_schema() {
 
     return $schema;
 }
+*/

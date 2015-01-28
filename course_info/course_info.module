@@ -56,23 +56,20 @@ function load_course_info_from_web() {
         $file = system_retrieve_file($row->url, $destination, TRUE);
         if($file) {
             $reader->open($file->uri);
-            //while($reader->read() && ($reader->name !== 'college' && $reader->getAttribute('code') !== 'LL'));
             while($reader->read()){
                 if ($reader->name == 'college' && $reader->getAttribute('code') == 'LL') {
                     break;
                 }
             }
-            dpm($reader->getAttribute('code'));
-            //while($reader->name === 'college') {
             $data = new SimpleXMLElement($reader->readOuterXml());
-            //$reader->next('college');
-            //}
             $data = drupal_json_decode(drupal_json_encode($data));
             dpm($data);
         }
         else {
-            print_r("5");
+            $msg = "Unable to retrieve " . $row->url . ", course nodes will not be updated.";
         }
+
+
 
         //Add nid if new page or refresh updated col
         //if (!empty($fields)) {
@@ -84,5 +81,70 @@ function load_course_info_from_web() {
 
     }
 
+
+}
+
+function pushCoursesDataToDB($data) {
+
+    /*
+     * How to check if there are multiples of the object you are inserting:
+     * e.x. - if department['@attributes'] doesnt exist, then you probably
+     * have something like department[0]['@attributes']
+     *
+     * Two ideas to check:
+     * 1) If children of department are named as ints
+     * 2) If @attributes doesnt exist as a direct child.
+     */
+
+    // Departments
+    /*
+    if(!empty($data['department'])){
+        db_update('courses_info_departments')
+            ->fields($data['department']['@attributes'])
+            // update if id of db item with code of $data['department']['@attributes']['code'] exists
+            // if not, create new row.
+            //->condition('id', )
+    }
+    */
+
+
+    // Subjects
+
+    // Courses
+
+    // Sections
+
+    // Instructors
+
+    // Sections-Instructors (normalization table)
+
+    // Meeting Times
+
+    // Sections-Meeting Times (normalization table)
+
+
+}
+
+
+function xml2array($xml) {
+    $arr = array();
+
+    foreach($xml as $element) {
+        $tag = $element->getName();
+        $e = get_object_vars($element);
+        if (!empty($e)) {
+            if($element instanceof SimpleXMLElement) {
+                $arr[$tag] = $e;
+                $arr[$tag][] = xml2array($element);
+            }
+            else {
+                $arr[$tag] = $e;
+            }
+        } else {
+            $arr[$tag] = trim($element);
+        }
+    }
+
+    return $arr;
 
 }
