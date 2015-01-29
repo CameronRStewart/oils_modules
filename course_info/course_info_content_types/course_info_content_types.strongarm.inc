@@ -1,13 +1,13 @@
 <?php
 /**
  * @file
- * unm_course_info_content_types.strongarm.inc
+ * course_info_content_types.strongarm.inc
  */
 
 /**
  * Implements hook_strongarm().
  */
-function unm_course_info_content_types_strongarm() {
+function course_info_content_types_strongarm() {
   $export = array();
 
   $strongarm = new stdClass();
@@ -23,13 +23,6 @@ function unm_course_info_content_types_strongarm() {
   $strongarm->name = 'comment_anonymous_department';
   $strongarm->value = 0;
   $export['comment_anonymous_department'] = $strongarm;
-
-  $strongarm = new stdClass();
-  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
-  $strongarm->api_version = 1;
-  $strongarm->name = 'comment_anonymous_meeting_time';
-  $strongarm->value = 0;
-  $export['comment_anonymous_meeting_time'] = $strongarm;
 
   $strongarm = new stdClass();
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
@@ -63,15 +56,8 @@ function unm_course_info_content_types_strongarm() {
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
   $strongarm->api_version = 1;
   $strongarm->name = 'comment_default_mode_department';
-  $strongarm->value = 0;
-  $export['comment_default_mode_department'] = $strongarm;
-
-  $strongarm = new stdClass();
-  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
-  $strongarm->api_version = 1;
-  $strongarm->name = 'comment_default_mode_meeting_time';
   $strongarm->value = 1;
-  $export['comment_default_mode_meeting_time'] = $strongarm;
+  $export['comment_default_mode_department'] = $strongarm;
 
   $strongarm = new stdClass();
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
@@ -84,7 +70,7 @@ function unm_course_info_content_types_strongarm() {
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
   $strongarm->api_version = 1;
   $strongarm->name = 'comment_default_mode_subject';
-  $strongarm->value = 0;
+  $strongarm->value = 1;
   $export['comment_default_mode_subject'] = $strongarm;
 
   $strongarm = new stdClass();
@@ -100,13 +86,6 @@ function unm_course_info_content_types_strongarm() {
   $strongarm->name = 'comment_default_per_page_department';
   $strongarm->value = '50';
   $export['comment_default_per_page_department'] = $strongarm;
-
-  $strongarm = new stdClass();
-  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
-  $strongarm->api_version = 1;
-  $strongarm->name = 'comment_default_per_page_meeting_time';
-  $strongarm->value = '50';
-  $export['comment_default_per_page_meeting_time'] = $strongarm;
 
   $strongarm = new stdClass();
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
@@ -140,15 +119,8 @@ function unm_course_info_content_types_strongarm() {
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
   $strongarm->api_version = 1;
   $strongarm->name = 'comment_form_location_department';
-  $strongarm->value = 0;
-  $export['comment_form_location_department'] = $strongarm;
-
-  $strongarm = new stdClass();
-  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
-  $strongarm->api_version = 1;
-  $strongarm->name = 'comment_form_location_meeting_time';
   $strongarm->value = 1;
-  $export['comment_form_location_meeting_time'] = $strongarm;
+  $export['comment_form_location_department'] = $strongarm;
 
   $strongarm = new stdClass();
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
@@ -161,15 +133,8 @@ function unm_course_info_content_types_strongarm() {
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
   $strongarm->api_version = 1;
   $strongarm->name = 'comment_form_location_subject';
-  $strongarm->value = 0;
+  $strongarm->value = 1;
   $export['comment_form_location_subject'] = $strongarm;
-
-  $strongarm = new stdClass();
-  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
-  $strongarm->api_version = 1;
-  $strongarm->name = 'comment_meeting_time';
-  $strongarm->value = '1';
-  $export['comment_meeting_time'] = $strongarm;
 
   $strongarm = new stdClass();
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
@@ -182,15 +147,8 @@ function unm_course_info_content_types_strongarm() {
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
   $strongarm->api_version = 1;
   $strongarm->name = 'comment_preview_department';
-  $strongarm->value = '0';
-  $export['comment_preview_department'] = $strongarm;
-
-  $strongarm = new stdClass();
-  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
-  $strongarm->api_version = 1;
-  $strongarm->name = 'comment_preview_meeting_time';
   $strongarm->value = '1';
-  $export['comment_preview_meeting_time'] = $strongarm;
+  $export['comment_preview_department'] = $strongarm;
 
   $strongarm = new stdClass();
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
@@ -231,15 +189,8 @@ function unm_course_info_content_types_strongarm() {
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
   $strongarm->api_version = 1;
   $strongarm->name = 'comment_subject_field_department';
-  $strongarm->value = 0;
-  $export['comment_subject_field_department'] = $strongarm;
-
-  $strongarm = new stdClass();
-  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
-  $strongarm->api_version = 1;
-  $strongarm->name = 'comment_subject_field_meeting_time';
   $strongarm->value = 1;
-  $export['comment_subject_field_meeting_time'] = $strongarm;
+  $export['comment_subject_field_department'] = $strongarm;
 
   $strongarm = new stdClass();
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
@@ -252,7 +203,7 @@ function unm_course_info_content_types_strongarm() {
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
   $strongarm->api_version = 1;
   $strongarm->name = 'comment_subject_field_subject';
-  $strongarm->value = 0;
+  $strongarm->value = 1;
   $export['comment_subject_field_subject'] = $strongarm;
 
   $strongarm = new stdClass();
@@ -264,13 +215,13 @@ function unm_course_info_content_types_strongarm() {
     'extra_fields' => array(
       'form' => array(
         'title' => array(
-          'weight' => '-5',
+          'weight' => '1',
         ),
         'path' => array(
-          'weight' => '30',
+          'weight' => '5',
         ),
         'redirect' => array(
-          'weight' => '30',
+          'weight' => '4',
         ),
       ),
       'display' => array(),
@@ -287,13 +238,13 @@ function unm_course_info_content_types_strongarm() {
     'extra_fields' => array(
       'form' => array(
         'title' => array(
-          'weight' => '-5',
+          'weight' => '1',
         ),
         'path' => array(
-          'weight' => '30',
+          'weight' => '5',
         ),
         'redirect' => array(
-          'weight' => '30',
+          'weight' => '4',
         ),
       ),
       'display' => array(),
@@ -304,42 +255,19 @@ function unm_course_info_content_types_strongarm() {
   $strongarm = new stdClass();
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
   $strongarm->api_version = 1;
-  $strongarm->name = 'field_bundle_settings_node__meeting_time';
-  $strongarm->value = array(
-    'view_modes' => array(),
-    'extra_fields' => array(
-      'form' => array(
-        'title' => array(
-          'weight' => '-5',
-        ),
-        'path' => array(
-          'weight' => '30',
-        ),
-        'redirect' => array(
-          'weight' => '30',
-        ),
-      ),
-      'display' => array(),
-    ),
-  );
-  $export['field_bundle_settings_node__meeting_time'] = $strongarm;
-
-  $strongarm = new stdClass();
-  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
-  $strongarm->api_version = 1;
   $strongarm->name = 'field_bundle_settings_node__section';
   $strongarm->value = array(
     'view_modes' => array(),
     'extra_fields' => array(
       'form' => array(
         'title' => array(
-          'weight' => '-5',
+          'weight' => '2',
         ),
         'path' => array(
-          'weight' => '30',
+          'weight' => '24',
         ),
         'redirect' => array(
-          'weight' => '30',
+          'weight' => '23',
         ),
       ),
       'display' => array(),
@@ -356,13 +284,13 @@ function unm_course_info_content_types_strongarm() {
     'extra_fields' => array(
       'form' => array(
         'title' => array(
-          'weight' => '-5',
+          'weight' => '1',
         ),
         'path' => array(
-          'weight' => '30',
+          'weight' => '5',
         ),
         'redirect' => array(
-          'weight' => '30',
+          'weight' => '4',
         ),
       ),
       'display' => array(),
@@ -383,13 +311,6 @@ function unm_course_info_content_types_strongarm() {
   $strongarm->name = 'menu_options_department';
   $strongarm->value = array();
   $export['menu_options_department'] = $strongarm;
-
-  $strongarm = new stdClass();
-  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
-  $strongarm->api_version = 1;
-  $strongarm->name = 'menu_options_meeting_time';
-  $strongarm->value = array();
-  $export['menu_options_meeting_time'] = $strongarm;
 
   $strongarm = new stdClass();
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
@@ -418,13 +339,6 @@ function unm_course_info_content_types_strongarm() {
   $strongarm->name = 'menu_parent_department';
   $strongarm->value = 'main-menu:0';
   $export['menu_parent_department'] = $strongarm;
-
-  $strongarm = new stdClass();
-  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
-  $strongarm->api_version = 1;
-  $strongarm->name = 'menu_parent_meeting_time';
-  $strongarm->value = 'main-menu:0';
-  $export['menu_parent_meeting_time'] = $strongarm;
 
   $strongarm = new stdClass();
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
@@ -461,15 +375,6 @@ function unm_course_info_content_types_strongarm() {
   $strongarm = new stdClass();
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
   $strongarm->api_version = 1;
-  $strongarm->name = 'node_options_meeting_time';
-  $strongarm->value = array(
-    0 => 'status',
-  );
-  $export['node_options_meeting_time'] = $strongarm;
-
-  $strongarm = new stdClass();
-  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
-  $strongarm->api_version = 1;
   $strongarm->name = 'node_options_section';
   $strongarm->value = array(
     0 => 'status',
@@ -502,13 +407,6 @@ function unm_course_info_content_types_strongarm() {
   $strongarm = new stdClass();
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
   $strongarm->api_version = 1;
-  $strongarm->name = 'node_preview_meeting_time';
-  $strongarm->value = '1';
-  $export['node_preview_meeting_time'] = $strongarm;
-
-  $strongarm = new stdClass();
-  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
-  $strongarm->api_version = 1;
   $strongarm->name = 'node_preview_section';
   $strongarm->value = '1';
   $export['node_preview_section'] = $strongarm;
@@ -533,13 +431,6 @@ function unm_course_info_content_types_strongarm() {
   $strongarm->name = 'node_submitted_department';
   $strongarm->value = 0;
   $export['node_submitted_department'] = $strongarm;
-
-  $strongarm = new stdClass();
-  $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
-  $strongarm->api_version = 1;
-  $strongarm->name = 'node_submitted_meeting_time';
-  $strongarm->value = 0;
-  $export['node_submitted_meeting_time'] = $strongarm;
 
   $strongarm = new stdClass();
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */

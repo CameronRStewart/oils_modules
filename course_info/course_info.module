@@ -68,7 +68,7 @@ function load_course_info_from_web() {
         else {
             $msg = "Unable to retrieve " . $row->url . ", course nodes will not be updated.";
         }
-
+        buildCoursesContentTypes($data);
 
 
         //Add nid if new page or refresh updated col
@@ -84,7 +84,7 @@ function load_course_info_from_web() {
 
 }
 
-function pushCoursesDataToDB($data) {
+function buildCoursesContentTypes($data) {
 
     /*
      * How to check if there are multiples of the object you are inserting:
@@ -96,35 +96,72 @@ function pushCoursesDataToDB($data) {
      * 2) If @attributes doesnt exist as a direct child.
      */
 
-    // Departments
+
     /*
-    if(!empty($data['department'])){
-        db_update('courses_info_departments')
-            ->fields($data['department']['@attributes'])
-            // update if id of db item with code of $data['department']['@attributes']['code'] exists
-            // if not, create new row.
-            //->condition('id', )
+    *     global $user;
+          // Pull all employee nids into array to check against
+          $nid_list_q = db_query('select nid, title from {node} n where n.type = \'employee\'');
+          foreach ($nid_list_q as $nline) {
+            $nid_list["$nline->title"] = $nline->nid;
+          }
+
+          // Check to see if node exists; if so, get it, otherwise create it
+          $node_title = "";
+          if (isset($input["field_first_name"])) {
+            $node_title .= $input["field_first_name"];
+          }
+          if (isset($input["field_middle_name"])) {
+            $node_title .= " " . $input["field_middle_name"];
+          }
+          if (isset($input["field_last_name"])) {
+            $node_title .= " " . $input["field_last_name"];
+          }
+          if (isset($nid_list[$node_title]) && is_numeric($nid_list[$node_title])) {
+            $wrapper = entity_metadata_wrapper('node', $nid_list[$node_title]);
+          }
+          else {
+            $values = array(
+              'type' => 'employee',
+              'uid' => $user->uid,
+              'status' => 1,
+              'comment' => 0,
+              'promote' => 0,
+            );
+            $entity = entity_create('node', $values);
+            $wrapper = entity_metadata_wrapper('node', $entity);
+          }
+     */
+
+
+    /*
+     * Start moving through data, our assumed top level is College
+     */
+    $dept_list_q = db_query('select * from {node} n where n.type = \'Department\'');
+    foreach ($dept_list_q as $dept) {
+        $dept_list["$dept->title"] = $dept->nid;
     }
-    */
+    //dpm($dept_list);
 
 
-    // Subjects
-
-    // Courses
-
-    // Sections
-
-    // Instructors
-
-    // Sections-Instructors (normalization table)
-
-    // Meeting Times
-
-    // Sections-Meeting Times (normalization table)
 
 
 }
 
+function createNewDepartmentNode($data) {
+
+}
+function createNewSubjectNode($data) {
+
+}
+function createNewSectionNode($data) {
+
+}
+function createNewInstructorNode($data) {
+
+}
+function createNewMeetingTimeNode($data) {
+
+}
 
 function xml2array($xml) {
     $arr = array();

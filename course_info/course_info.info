@@ -3,6 +3,6 @@ description = Imports all OILS courses and their information
 core = 7.x
 package = UNM University Libraries
 version = 7.x-1.0
-dependencies[] = unm_course_info_content_types
+dependencies[] = course_info_content_types
 dependencies[] = staffdb
 configure = admin/config/services/oils-courses-info

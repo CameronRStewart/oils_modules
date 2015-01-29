@@ -1,7 +1,0 @@
-<?php
-/**
- * @file
- * Code for the UNM Course Info Content Types feature.
- */
-
-include_once 'unm_course_info_content_types.features.inc';

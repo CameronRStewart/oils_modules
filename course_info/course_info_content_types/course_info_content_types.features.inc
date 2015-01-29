@@ -1,13 +1,13 @@
 <?php
 /**
  * @file
- * unm_course_info_content_types.features.inc
+ * course_info_content_types.features.inc
  */
 
 /**
  * Implements hook_ctools_plugin_api().
  */
-function unm_course_info_content_types_ctools_plugin_api($module = NULL, $api = NULL) {
+function course_info_content_types_ctools_plugin_api($module = NULL, $api = NULL) {
   if ($module == "strongarm" && $api == "strongarm") {
     return array("version" => "1");
   }
@@ -16,30 +16,22 @@ function unm_course_info_content_types_ctools_plugin_api($module = NULL, $api = 
 /**
  * Implements hook_node_info().
  */
-function unm_course_info_content_types_node_info() {
+function course_info_content_types_node_info() {
   $items = array(
     'course' => array(
       'name' => t('Course'),
       'base' => 'node_content',
-      'description' => t('This is an individual course being offered in a subject, by a department'),
+      'description' => t('This is a specific course offered by this department'),
       'has_title' => '1',
-      'title_label' => t('Title'),
-      'help' => t('Each Course has a Title, a Number, a Catalog Description, and one or more Sections.'),
+      'title_label' => t('Number'),
+      'help' => '',
     ),
     'department' => array(
       'name' => t('Department'),
       'base' => 'node_content',
       'description' => t('This is a department within a college'),
       'has_title' => '1',
-      'title_label' => t('Name'),
-      'help' => t('Each department has a required department code and name.'),
-    ),
-    'meeting_time' => array(
-      'name' => t('Meeting Time'),
-      'base' => 'node_content',
-      'description' => '',
-      'has_title' => '1',
-      'title_label' => t('Title'),
+      'title_label' => t('Code'),
       'help' => '',
     ),
     'section' => array(
@@ -53,10 +45,10 @@ function unm_course_info_content_types_node_info() {
     'subject' => array(
       'name' => t('Subject'),
       'base' => 'node_content',
-      'description' => t('Each Department teaches one or more Subjects.'),
+      'description' => t('This is a subject of study within a department'),
       'has_title' => '1',
-      'title_label' => t('Name'),
-      'help' => t('Each subject has a required Code and Name field'),
+      'title_label' => t('Code'),
+      'help' => '',
     ),
   );
   drupal_alter('node_info', $items);
