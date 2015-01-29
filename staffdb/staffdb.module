@@ -878,11 +878,15 @@ function check_update_rights($node) {
   // Test username same as NetID
   if (isset($user_email_string) && isset($netid_string) && $user_email_string == $netid_string) {
     $update_rights['user'] = 'true';
+  } else {
+    $update_rights['user'] = 'false';
   }
 
   if ($user->roles) {
     if (in_array('administrator', $user->roles)) {
       $update_rights['admin'] = 'true';
+    } else {
+      $update_rights['admin'] = 'false';
     }
   }
   return $update_rights;
@@ -1684,9 +1688,41 @@ function staffdb_node_presave($node) {
     }
 
   }
-  /*
-  $a = dsm($new_remote_loc_id);
-  drupal_set_message(t('Locations: %a', array('%a' => $a)));
-  */
+
+}
+
+// Intercept user login to set ownership of appropriate nodes
+/**
+ * @file
+ * Set ownership of appropriate nodes.
+ */
+/**
+ * Implements hook_user_login().
+ */
+
+function staffdb_user_login(&$edit, $account) {
+  $user_id = $account->uid;
+  $user_mail = $account->mail;
+  $query = new EntityFieldQuery();
+
+  $query->entityCondition('entity_type', 'node')
+    ->entityCondition('bundle', 'employee')
+    ->fieldCondition('field_email', 'value', $user_mail)
+    ->addMetaData('account', user_load(1));
+
+  $result = $query->execute();
+
+  $emp_node = db_query("select e.entity_id as emp_entity_id, n.nid as emp_loc_entity_id from {field_data_field_email} e, {field_data_field_remote_id} r, {node} n where e.bundle = 'employee' and e.field_email_value = '$user_mail' and r.entity_id = e.entity_id and field_remote_id_value = n.title");
+
+  if (isset($emp_node)) {
+    $employee_node = array();
+    foreach ($emp_node as $val) {
+      $update = db_query("update {node} set uid = '$user_id' where nid in ('$val->emp_entity_id', '$val->emp_loc_entity_id')");
+      /*
+      $a = dsm($pval);
+      drupal_set_message(t('Node: %a', array('%a' => $a)));
+      */
+    }
+  }
 
 }
