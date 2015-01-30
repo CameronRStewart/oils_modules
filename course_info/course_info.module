@@ -71,14 +71,6 @@ function load_course_info_from_web() {
         buildCoursesContentTypes($data);
 
 
-        //Add nid if new page or refresh updated col
-        //if (!empty($fields)) {
-        //   db_update('program_of_study')
-        //        ->fields($fields)
-        //        ->condition('id', $row->id)
-        //        ->execute();
-        //}
-
     }
 
 
@@ -136,52 +128,106 @@ function buildCoursesContentTypes($data) {
     /*
      * Start moving through data, our assumed top level is College
      */
-    $dept_list_q = db_query('select * from {node} n where n.type = \'Department\'');
+    $dept_list_q = db_query('select nid, title from {node} n where n.type = \'Department\'');
     foreach ($dept_list_q as $dept) {
         $dept_list["$dept->title"] = $dept->nid;
     }
+
+    //$data['department']['@attributes'] = singular attributes
+    //$data['department']['subject'] = one or more subjects and the rest of the subtree
     //dpm($dept_list);
 
 
-
-
-}
-
-function createNewDepartmentNode($data) {
-
-}
-function createNewSubjectNode($data) {
-
-}
-function createNewSectionNode($data) {
-
-}
-function createNewInstructorNode($data) {
-
-}
-function createNewMeetingTimeNode($data) {
-
-}
-
-function xml2array($xml) {
-    $arr = array();
-
-    foreach($xml as $element) {
-        $tag = $element->getName();
-        $e = get_object_vars($element);
-        if (!empty($e)) {
-            if($element instanceof SimpleXMLElement) {
-                $arr[$tag] = $e;
-                $arr[$tag][] = xml2array($element);
+    // Sloppy test to see if there is more than one department
+    if(array_key_exists(0, $data['department'])){
+        foreach($data['department'] as $department){
+            $department_title = $department['@attributes']['code'];
+            if (array_key_exists($department_title, $dept_list)){
+                updateCourseInfoNode($department, 'department');
             }
             else {
-                $arr[$tag] = $e;
+                createNewCourseInfoNode($department, 'department');
             }
-        } else {
-            $arr[$tag] = trim($element);
+        }
+    }
+    else {
+        $department = $data['department'];
+        $department_title = $department['@attributes']['code'];
+        if (array_key_exists($department_title, $dept_list)){
+            updateCourseInfoNode($department, 'department');
+        }
+        else {
+            createNewCourseInfoNode($department, 'department');
         }
     }
 
-    return $arr;
+}
 
+function createNewCourseInfoNode($data, $type) {
+    global $user;
+    switch ($type) {
+        case 'department':
+            $attributes = $data['@attributes'];
+            $subjects = $data['subject'];
+            $values = array(
+                'type' => 'department',
+                'uid' => $user->uid,
+                'status' => 1,
+                'comment' => 0,
+                'promote' => 0,
+            );
+            $entity = entity_create('node', $values);
+            $wrapper = entity_metadata_wrapper('node', $entity);
+
+            // Set all values
+            if (isset($attributes["code"]) && !empty($input["code"])) {
+                $wrapper->title->value->set($attributes["code"]);
+            }
+            if (isset($attributes["name"]) && !empty($input["name"])) {
+                $wrapper->field_name->set($attributes["name"]);
+            }
+            // Now we have to set an entity reference for every associated subject.
+            foreach ($subjects as $subject) {
+                // Create or Update individual Subject node (and create necessary nodes recursively on downwards)
+                // Then... create the entity reference for each newly created node as they are finished creating.
+                // Maybe I should return an NID ...
+            }
+
+
+            // The End - Save It
+            $wrapper->save();
+            break;
+        case 'subject':
+            //code
+            break;
+        case 'course':
+            //code
+            break;
+        case 'section':
+            //code
+            break;
+        case 'instructor':
+            //code
+            break;
+    }
+
+}
+function updateCourseInfoNode($data, $type) {
+    switch ($type) {
+        case 'department':
+            //code
+            break;
+        case 'subject':
+            //code
+            break;
+        case 'course':
+            //code
+            break;
+        case 'section':
+            //code
+            break;
+        case 'instructor':
+            //code
+            break;
+    }
 }
