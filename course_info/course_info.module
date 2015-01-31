@@ -70,7 +70,7 @@ function load_course_info_from_web() {
         else {
             $msg = "Unable to retrieve " . $row->url . ", course nodes will not be updated.";
         }
-        buildCourseEntities($data, 'department');
+        buildCourseEntities($data['department'], 'department');
 
 
     }
@@ -137,34 +137,17 @@ function buildCourseEntities($data, $type) {
     }
 
     // Sloppy test to see if there is more than one entity of this type
-    if(testNewEntityPlurality($data[$type])){
-        dpm('plural');
-        foreach($data[$type] as $new_entity){
-            $new_entity_title = $new_entity['@attributes'][$title_key];
-            if (array_key_exists($new_entity_title, $entity_list)){
-                dpm('update');
-                dpm($new_entity_title);
-                return updateCourseInfoEntity($new_entity, $type);
-            }
-            else {
-                dpm('create');
-                return createNewCourseInfoEntity($new_entity, $type);
-            }
-        }
+    dpm('not plural');
+    $new_entity = $data;
+    $new_entity_title = $new_entity['@attributes'][$title_key];
+    dpm($new_entity_title);
+    if (array_key_exists($new_entity_title, $entity_list)){
+        dpm('exists');
+        return updateCourseInfoEntity($new_entity, $type);
     }
     else {
-        dpm('not plural');
-        $new_entity = $data[$type];
-        $new_entity_title = $new_entity['@attributes'][$title_key];
-        dpm($new_entity_title);
-        if (array_key_exists($new_entity_title, $entity_list)){
-            dpm('exists');
-            return updateCourseInfoEntity($new_entity, $type);
-        }
-        else {
-            dpm('doesnt exist');
-            return createNewCourseInfoEntity($new_entity, $type);
-        }
+        dpm('doesnt exist');
+        return createNewCourseInfoEntity($new_entity, $type);
     }
 
 }
@@ -226,7 +209,7 @@ function createNewCourseInfoEntity($data, $type) {
                 // Create or Update individual Subject node (and create necessary nodes recursively on downwards)
                 // Then... create the entity reference for each newly created node as they are finished creating.
                 // Maybe I should return an NID ...
-                $subject_nid = buildCourseEntities($data, 'subject'); // <---------------------------------------------------------------------
+                $subject_nid = buildCourseEntities($subject, 'subject'); // <---------------------------------------------------------------------
                 $entity->field_subject[$entity->language][]['target_id'] = $subject_nid;
             }
             // The End - Save It
