@@ -31,13 +31,7 @@ function staffdb_block_info() {
 function get_staff_info() {
 
   // Set db connection
-  $dbcon = variable_get('staffdb_connection_name');
-  if (isset($dbcon) && $dbcon != "") {
-    db_set_active($dbcon);
-  }
-  else {
-    db_set_active('remote');
-  }
+  db_set_active('remote');
 
   // Execute query
   $result = db_query('select e.id, e.first_name, e.middle_name, e.last_name, e.visible, e.email, e.rg_profile, e.picture, e.blurb, e.codhead, e.current_teach, e.ul_employee, e.oils_employee, e.cv_link, d.dept_id, d.dept, ed.emp2dept_id, b.box_id, b.room, b.telephone, eb.emp2box_id, l.loc_id, l.loc, r.rank, s.sub_id, s.sub, es.emp2subjects_id, w.websites_id, w.website, ew.emp2websites_id, res.research_id, res.research, eres.emp2research_id, t.title, ec.emp2classes_id, c.classes_id, c.classes
@@ -147,15 +141,6 @@ function staffdb_help($path, $arg) {
  */
 function staffdb_menu() {
   $items = array();
-
-  $items['admin/config/content/staffdb-settings'] = array(
-    'title' => 'Employee Database Module Configuration',
-    'description' => 'Configuration for UL Database Interaction Module.',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('staffdb_connection_form'),
-    'access arguments' => array('access administration pages'),
-    'type' => MENU_NORMAL_ITEM,
-  );
   $items['admin/config/content/staffdb-import'] = array(
     'title' => 'Employee Database Module: Import and Update Records',
     'description' => 'Allows employee information to be imported or updated.',
@@ -166,25 +151,6 @@ function staffdb_menu() {
   );
 
   return $items;
-}
-
-/**
- * Page callback: staffdb settings
- *
- * @see staffdb_menu()
- */
-function staffdb_connection_form($form, &$form_state) {
-  $form['staffdb_connection_name'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Connection name to use for employee database access'),
-    '#default_value' => variable_get('staffdb_connection_name'),
-    '#size' => 12,
-    '#maxlength' => 50,
-    '#description' => t('The connection name from Drupal\'s settings.php file to use for employee database access.'),
-    '#required' => TRUE,
-  );
-
-  return system_settings_form($form);
 }
 
 /**
