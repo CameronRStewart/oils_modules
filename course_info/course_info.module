@@ -55,7 +55,7 @@ function load_course_info_from_web() {
     // There should only be one...
     $reader = new XMLReader();
     foreach ($url_result as $row) {
-        $file = system_retrieve_file($row->url, $destination, TRUE);
+        $file = system_retrieve_file($row->url, $destination, TRUE, FILE_EXISTS_REPLACE);
         if($file) {
             $reader->open($file->uri);
             while($reader->read()){
@@ -65,11 +65,15 @@ function load_course_info_from_web() {
             }
             $data = new SimpleXMLElement($reader->readOuterXml());
             $data = drupal_json_decode(drupal_json_encode($data));
-            //dpm($data);
         }
         else {
             $msg = "Unable to retrieve " . $row->url . ", course nodes will not be updated.";
         }
+
+        /*
+         * For the time being, we are starting with the creation
+         * of Departments and moving downwards through the tree.
+         */
         buildCourseEntities($data['department'], 'department');
 
 
@@ -137,16 +141,14 @@ function buildCourseEntities($data, $type) {
     }
 
     // Sloppy test to see if there is more than one entity of this type
-    dpm('not plural');
     $new_entity = $data;
     $new_entity_title = $new_entity['@attributes'][$title_key];
-    dpm($new_entity_title);
     if (array_key_exists($new_entity_title, $entity_list)){
-        dpm('exists');
+        //dpm('exists');
         return updateCourseInfoEntity($new_entity, $type);
     }
     else {
-        dpm('doesnt exist');
+        //dpm('doesnt exist');
         return createNewCourseInfoEntity($new_entity, $type);
     }
 
@@ -173,8 +175,6 @@ function testNewEntityPlurality($data){
  * @return node_id
  */
 function createNewCourseInfoEntity($data, $type) {
-    dpm($type);
-    dpm($data);
     global $user;
     switch ($type) {
         case 'department':
@@ -206,9 +206,6 @@ function createNewCourseInfoEntity($data, $type) {
             }
             // Now we have to set an entity reference for every associated subject.
             foreach ($subjects as $subject) {
-                // Create or Update individual Subject node (and create necessary nodes recursively on downwards)
-                // Then... create the entity reference for each newly created node as they are finished creating.
-                // Maybe I should return an NID ...
                 $subject_nid = buildCourseEntities($subject, 'subject'); // <---------------------------------------------------------------------
                 $entity->field_subject[$entity->language][]['target_id'] = $subject_nid;
             }
