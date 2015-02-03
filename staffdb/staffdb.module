@@ -58,63 +58,6 @@ function get_staff_info() {
   return $result;
 }
 
-function staffdb_block_view($delta = '') {
-  $block['staffdb'] = t('Employee Listing');
-  if (user_access('access content')) {
-    $result = get_staff_info();
-    $massaged_result = massage_employee_data($result);
-    $squished_result = makeDirectory($massaged_result);
-    $items[] = array();
-
-    foreach ($squished_result as $record) {
-      $items[] = array(
-        'data' => array(
-          $record['name'],
-          $record['title'],
-          $record['dept'],
-          $record['room'],
-          $record['research'],
-          $record['classes']
-        ),
-      );
-    }
-//        $ret_array[] = array("name" => "$name_code", "title" => "$title_code$rank_code", "dept" => "$dept_code", "room" => "$room_code", "id" => "$cur_id", "research" => "$research_code", "classes" => "$classes_code");
-
-  }
-
-
-  // No results.
-  if (empty($items)) {
-    $block['content'] = t('No employee information available.');
-  }
-  else {
-    $variables[] = array();
-
-    $variables['header'] = array(
-      //    array('data' => t('Name'), 'field' => 'name', 'sort' => 'asc'),
-      //    array('data' => t('Title/Rank'), 'field' => 'title'),
-      array('data' => t('Name')),
-      array('data' => t('Title/Rank')),
-      array('data' => t('Department')),
-      array('data' => t('Location')),
-      array('data' => t('Research Interests')),
-      array('data' => t('Classes')),
-
-    );
-
-    // Pass data through theme function.
-    $variables['rows'] = $items;
-    $variables['attributes'] = array();
-    $variables['caption'] = '';
-    $variables['colgroups'] = array();
-    $variables['sticky'] = TRUE;
-    $variables['empty'] = t("No data returned.");
-    $block['content'] = theme_table($variables);
-  }
-
-  return $block;
-}
-
 
 /**
  * Implements hook_help().
@@ -175,8 +118,10 @@ function staffdb_import_form($form, &$form_state) {
 
 function import_update_employees($args = NULL) {
   if (isset($args) && $args == "begin") {
-    $argtext = $args;
     $results_text = start_import_update_employees();
+    if (!isset($results_text) || empty($results_text)) {
+      $results_text = "Employee information updated";
+    }
     return array(
       '#markup' => t('<p>@results_text</p>', array(
         '@args' => $args,
@@ -290,8 +235,8 @@ function make_update_employee_content_type($input) {
       if (isset($emp['codhead']) && $emp['codhead'] != "") {
         $return['field_dean_s_cabinet_member'] = $emp['codhead'];
       }
-      if (isset($emp['current_teach']) && $emp['current_teach'] != "") {
-        $return['field_currently_teaching'] = $emp['current_teach'];
+      if (isset($emp['currently_teaching']) && $emp['currently_teaching'] != "") {
+        $return['field_currently_teaching'] = $emp['currently_teaching'];
       }
       if (isset($emp['ul_employee']) && $emp['ul_employee'] != "") {
         $return['field_ul_employee'] = $emp['ul_employee'];
@@ -837,7 +782,7 @@ function check_update_rights($node) {
   }
 
   // Get logged-in username
-  if ($user->mail) {
+  if (isset($user->mail)) {
     $user_email_string = substr($user->mail, 0, strpos($user->mail, '@'));
   }
 
@@ -1072,10 +1017,6 @@ function staffdb_node_presave($node) {
       // Revert to default db connection
       db_set_active();
     }
-
-    // Collect changes to XXX:  classes, location,
-    // Done: subjects, research, title, rank, website, dept,
-
 
     if (isset($node->field_subjects) || isset($node->original->field_subjects)) {
       $subjects_names = array();
@@ -1684,11 +1625,16 @@ function staffdb_user_login(&$edit, $account) {
     $employee_node = array();
     foreach ($emp_node as $val) {
       $update = db_query("update {node} set uid = '$user_id' where nid in ('$val->emp_entity_id', '$val->emp_loc_entity_id')");
-      /*
-      $a = dsm($pval);
-      drupal_set_message(t('Node: %a', array('%a' => $a)));
-      */
     }
   }
 
+}
+
+
+/**
+ * Implements hook_cron().
+ */
+
+function staffdb_cron() {
+  start_import_update_employees();
 }
