@@ -140,6 +140,11 @@ function start_import_update_employees() {
   $results_add_update = make_update_employee_content_type($massaged_result);
   $results_remove = delete_employee($massaged_result);
 
+  if (!empty($results_add_update)) {
+    $updated_list = implode(', ', $results_add_update);
+    drupal_set_message(t("Updated employee(s): @updated_list.", array('@updated_list' => $updated_list)), 'status');
+  }
+
   if (!empty($results_remove)) {
     $deleted_list = implode(', ', $results_remove);
     drupal_set_message(t("Removed from employee list: @deleted_list.", array('@deleted_list' => $deleted_list)), 'status');
@@ -151,34 +156,33 @@ function start_import_update_employees() {
 
 function delete_employee($input) {
   global $user;
-  // Pull all employee nids into array to check against
-  $nid_list_q = db_query('select nid, title from {node} n where n.type = \'employee\'');
-  foreach ($nid_list_q as $nline) {
-    $nid_list["$nline->title"] = $nline->nid;
+  if ($user->uid == "0") {
+    $user = user_load(1);
   }
-
+  // Pull all employee nids into array to check against
+  $nid_list_q = db_query('select nid, field_remote_id_value from {node} n, {field_data_field_remote_id} f where n.type = \'employee\' and n.nid = f.entity_id');
+  foreach ($nid_list_q as $nline) {
+    $nid_list["$nline->field_remote_id_value"] = $nline->nid;
+  }
+  $employees_deleted = array();
   // Remove records that are in $input
   foreach ($input as $emp_id => $emp) {
-    $name_string = "";
-    if (isset($emp["first_name"])) {
-      $name_string .= $emp["first_name"];
-    }
-    if (isset($emp["middle_name"]) && $emp["middle_name"] != "") {
-      $name_string .= " " . $emp["middle_name"];
-    }
-    if (isset($emp["last_name"]) && $emp["last_name"] != "") {
-      $name_string .= " " . $emp["last_name"];
-    }
-    if (array_key_exists($name_string, $nid_list)) { // Employee still exists, remove from list
-      unset($nid_list[$name_string]);
+    /*
+    $node1 = dsm($emp);
+    drupal_set_message(t('%a', array('%a' => $node1)));
+    */
+    if (isset($emp["id"]) && is_numeric($emp["id"])) {
+      if (array_key_exists($emp["id"], $nid_list)) { // Employee still exists, remove from list
+        unset($nid_list[$emp["id"]]);
+      } else {
+        $employees_deleted[] = $emp["first_name"] . " " . $emp["middle_name"] . " " . $emp["last_name"];
+      }
     }
   }
   // If any entries remain, they need to be deleted
-  $employees_deleted = array();
   if (!empty($nid_list)) {
     foreach ($nid_list as $key => $nid) {
       if (is_numeric($nid)) {
-        $employees_deleted[] = $key;
         $node = entity_metadata_wrapper('node', $nid);
         $loc = $node->field_physical_location->value();
         $loc_nid = $loc[0]->nid;
@@ -281,25 +285,29 @@ function make_update_employee_content_type($input) {
 
 function check_employee($input, $location_vids) {
   global $user;
-  // Pull all employee nids into array to check against
-  $nid_list_q = db_query('select nid, title from {node} n where n.type = \'employee\'');
-  foreach ($nid_list_q as $nline) {
-    $nid_list["$nline->title"] = $nline->nid;
+  if ($user->uid == "0") {
+    $user = user_load(1);
   }
 
-  // Check to see if node exists; if so, get it, otherwise create it
-  $node_title = "";
-  if (isset($input["field_first_name"])) {
-    $node_title .= $input["field_first_name"];
+  $field_val = $input["field_remote_id"];
+  $query = new EntityFieldQuery;
+
+  $result = $query
+    ->entityCondition('entity_type', 'node')
+    ->fieldCondition('field_remote_id', 'value', $field_val, '=')
+    ->execute();
+
+  foreach ($result as $val => $trash) {
+    foreach ($trash as $val2 => $trash2) {
+      $node_id = $trash2->nid;
+    }
   }
-  if (isset($input["field_middle_name"])) {
-    $node_title .= " " . $input["field_middle_name"];
-  }
-  if (isset($input["field_last_name"])) {
-    $node_title .= " " . $input["field_last_name"];
-  }
-  if (isset($nid_list[$node_title]) && is_numeric($nid_list[$node_title])) {
-    $wrapper = entity_metadata_wrapper('node', $nid_list[$node_title]);
+/*  $wrap2 = entity_metadata_wrapper('node', $node_id);
+  $node2 = dsm($node_id);
+  drupal_set_message(t('%n', array('%n' => $node2)));
+*/
+  if (isset($node_id) && is_numeric($node_id)) {
+    $wrapper = entity_metadata_wrapper('node', $node_id);
   }
   else {
     $values = array(
@@ -639,6 +647,9 @@ function get_tids($vid) {
 
 function check_locations($input, $remote_id) {
   global $user;
+  if ($user->uid == "0") {
+    $user = user_load(1);
+  }
   // Pull all building locations into structure to check against
   $vid_q = db_query('select vid, name from {taxonomy_vocabulary} t where t.name = \'Location\'');
   foreach ($vid_q as $vline) {
@@ -688,6 +699,9 @@ function check_locations($input, $remote_id) {
 // With $vid, checks to see if node needs updated
 function insert_update_location_node($box_info, $remote_id, $tid, $vid = NULL) {
   global $user;
+  if ($user->uid == "0") {
+    $user = user_load(1);
+  }
 
   if (isset($vid) && !empty($vid)) { // TODO: test if values have changed, only update if yes
     // UPDATE instead of create
@@ -744,6 +758,9 @@ function insert_update_location_node($box_info, $remote_id, $tid, $vid = NULL) {
 
 function insert_tax_tid($vid, $term, $term_type) {
   global $user;
+  if ($user->uid == "0") {
+    $user = user_load(1);
+  }
   // CREATE new
   $values = array(
     'name' => $term,
@@ -759,6 +776,9 @@ function insert_tax_tid($vid, $term, $term_type) {
 // Check whether user is admin or is trying to update own record
 function check_update_rights($node) {
   global $user;
+  if ($user->uid == "0") {
+    $user = user_load(1);
+  }
   $update_rights = array();
 
   // Get user's email, cut off @... == NetID
@@ -814,31 +834,33 @@ function check_update_rights($node) {
 
 function staffdb_node_presave($node) {
   global $user;
+  if ($user->uid == "0") {
+    $user = user_load(1);
+  }
 
   // Check whether user is admin or is trying to update own record
   $update_rights = check_update_rights($node);
 
   // For now, node must exist (was imported from employee db already);
   // this means data can only be updated, not created
-  if ($node->type == 'employee' && $node->nid && ($update_rights['admin'] == 'true' || $update_rights['user'] == 'true')) {
+  if ($node->type == 'employee' && isset($node->nid) && ($update_rights['admin'] == 'true' || $update_rights['user'] == 'true')) {
     // Create empty array to hold changed values: if not empty at end, update
     $emp_base_change = array();
-
+    $node_title = "";
     //First gather changes in base table
-    // Check if fields have changed & update if so
-    if ($node->title && $node->original->title && ($node->title != $node->original->title)) {
-      // If so, set var to indicate remote db needs updated
-      // Title needs updated; it's a glom of the name fields
-    }
     if ($node->field_remote_id) {
       $remote_id = $node->field_remote_id['und'][0]['value'];
     }
     if (isset($node->field_first_name['und'][0]['value']) || isset($node->original->field_first_name['und'][0]['value'])) {
       if (isset($node->field_first_name['und'][0]['value']) && isset($node->original->field_first_name['und'][0]['value']) && ($node->field_first_name['und'][0]['value'] != $node->original->field_first_name['und'][0]['value'])) {
         $emp_base_change['first_name'] = $node->field_first_name['und'][0]['value'];
+        $node_title .= $node->field_first_name['und'][0]['value'];
+      } elseif (isset($node->field_first_name['und'][0]['value']) && isset($node->original->field_first_name['und'][0]['value']) && ($node->field_first_name['und'][0]['value'] == $node->original->field_first_name['und'][0]['value'])) {
+        $node_title .= $node->field_first_name['und'][0]['value'];
       }
       elseif (isset($node->field_first_name['und'][0]['value']) && !isset($node->original->field_first_name['und'][0]['value'])) {
         $emp_base_change['first_name'] = $node->field_first_name['und'][0]['value'];
+        $node_title .= $node->field_first_name['und'][0]['value'];
       }
       elseif (!isset($node->field_first_name['und'][0]['value']) && isset($node->original->field_first_name['und'][0]['value'])) {
         $emp_base_change['first_name'] = "";
@@ -847,9 +869,13 @@ function staffdb_node_presave($node) {
     if (isset($node->field_middle_name['und'][0]['value']) || isset($node->original->field_middle_name['und'][0]['value'])) {
       if (isset($node->field_middle_name['und'][0]['value']) && isset($node->original->field_middle_name['und'][0]['value']) && ($node->field_middle_name['und'][0]['value'] != $node->original->field_middle_name['und'][0]['value'])) {
         $emp_base_change['middle_name'] = $node->field_middle_name['und'][0]['value'];
+        $node_title .= " " . $node->field_middle_name['und'][0]['value'];
+      } elseif (isset($node->field_middle_name['und'][0]['value']) && isset($node->original->field_middle_name['und'][0]['value']) && ($node->field_middle_name['und'][0]['value'] == $node->original->field_middle_name['und'][0]['value'])) {
+        $node_title .= " " . $node->field_middle_name['und'][0]['value'];
       }
       elseif (isset($node->field_middle_name['und'][0]['value']) && !isset($node->original->field_middle_name['und'][0]['value'])) {
         $emp_base_change['middle_name'] = $node->field_middle_name['und'][0]['value'];
+        $node_title .= " " . $node->field_middle_name['und'][0]['value'];
       }
       elseif (!isset($node->field_middle_name['und'][0]['value']) && isset($node->original->field_middle_name['und'][0]['value'])) {
         $emp_base_change['middle_name'] = "";
@@ -858,13 +884,20 @@ function staffdb_node_presave($node) {
     if (isset($node->field_last_name['und'][0]['value']) || isset($node->original->field_last_name['und'][0]['value'])) {
       if (isset($node->field_last_name['und'][0]['value']) && isset($node->original->field_last_name['und'][0]['value']) && ($node->field_last_name['und'][0]['value'] != $node->original->field_last_name['und'][0]['value'])) {
         $emp_base_change['last_name'] = $node->field_last_name['und'][0]['value'];
+        $node_title .= " " . $node->field_last_name['und'][0]['value'];
+      } elseif (isset($node->field_last_name['und'][0]['value']) && isset($node->original->field_last_name['und'][0]['value']) && ($node->field_last_name['und'][0]['value'] == $node->original->field_last_name['und'][0]['value'])) {
+        $node_title .= " " . $node->field_last_name['und'][0]['value'];
       }
       elseif (isset($node->field_last_name['und'][0]['value']) && !isset($node->original->field_last_name['und'][0]['value'])) {
         $emp_base_change['last_name'] = $node->field_last_name['und'][0]['value'];
+        $node_title .= " " . $node->field_last_name['und'][0]['value'];
       }
       elseif (!isset($node->field_last_name['und'][0]['value']) && isset($node->original->field_last_name['und'][0]['value'])) {
         $emp_base_change['last_name'] = "";
       }
+    }
+    if ($node->title && $node_title && ($node->title != $node_title)) {
+      $node->title = $node_title;
     }
     if (isset($node->field_email['und'][0]['value']) || isset($node->original->field_email['und'][0]['value'])) {
       if (isset($node->field_email['und'][0]['value']) && isset($node->original->field_email['und'][0]['value']) && ($node->field_email['und'][0]['value'] != $node->original->field_email['und'][0]['value'])) {
@@ -910,7 +943,6 @@ function staffdb_node_presave($node) {
         $emp_base_change['cv_link'] = "";
       }
     }
-
     if (isset($node->field_visible['und'][0]['value']) || isset($node->original->field_visible['und'][0]['value'])) {
       if (isset($node->field_visible['und'][0]['value']) && isset($node->original->field_visible['und'][0]['value']) && ($node->field_visible['und'][0]['value'] != $node->original->field_visible['und'][0]['value'])) {
         $emp_base_change['visible'] = $node->field_visible['und'][0]['value'];
@@ -922,7 +954,6 @@ function staffdb_node_presave($node) {
         $emp_base_change['visible'] = "0";
       }
     }
-
     if (isset($node->field_dean_s_cabinet_member['und'][0]['value']) || isset($node->original->field_dean_s_cabinet_member['und'][0]['value'])) {
       if (isset($node->field_dean_s_cabinet_member['und'][0]['value']) && isset($node->original->field_dean_s_cabinet_member['und'][0]['value']) && ($node->field_dean_s_cabinet_member['und'][0]['value'] != $node->original->field_dean_s_cabinet_member['und'][0]['value'])) {
         $emp_base_change['codhead'] = $node->field_dean_s_cabinet_member['und'][0]['value'];
@@ -934,7 +965,6 @@ function staffdb_node_presave($node) {
         $emp_base_change['codhead'] = "0";
       }
     }
-
     if (isset($node->field_currently_teaching['und'][0]['value']) || isset($node->original->field_currently_teaching['und'][0]['value'])) {
       if (isset($node->field_currently_teaching['und'][0]['value']) && isset($node->original->field_currently_teaching['und'][0]['value']) && ($node->field_currently_teaching['und'][0]['value'] != $node->original->field_currently_teaching['und'][0]['value'])) {
         $emp_base_change['current_teach'] = $node->field_currently_teaching['und'][0]['value'];
@@ -946,7 +976,6 @@ function staffdb_node_presave($node) {
         $emp_base_change['current_teach'] = "0";
       }
     }
-
     if (isset($node->field_ul_employee['und'][0]['value']) || isset($node->original->field_ul_employee['und'][0]['value'])) {
       if (isset($node->field_ul_employee['und'][0]['value']) && isset($node->original->field_ul_employee['und'][0]['value']) && ($node->field_ul_employee['und'][0]['value'] != $node->original->field_ul_employee['und'][0]['value'])) {
         $emp_base_change['ul_employee'] = $node->field_ul_employee['und'][0]['value'];
@@ -958,7 +987,6 @@ function staffdb_node_presave($node) {
         $emp_base_change['ul_employee'] = "0";
       }
     }
-
     if (isset($node->field_oils_employee['und'][0]['value']) || isset($node->original->field_oils_employee['und'][0]['value'])) {
       if (isset($node->field_oils_employee['und'][0]['value']) && isset($node->original->field_oils_employee['und'][0]['value']) && ($node->field_oils_employee['und'][0]['value'] != $node->original->field_oils_employee['und'][0]['value'])) {
         $emp_base_change['oils_employee'] = $node->field_oils_employee['und'][0]['value'];
@@ -970,7 +998,6 @@ function staffdb_node_presave($node) {
         $emp_base_change['oils_employee'] = "0";
       }
     }
-
     if ($node->body) {
       if (isset($node->body['und'][0]['value'])) {
         $new = $node->body['und'][0]['value'];
@@ -1004,17 +1031,8 @@ function staffdb_node_presave($node) {
         $emp_base_q = "update {employee} set $set_clause where id = $remote_id";
       }
 
-      // Set db connection
-      $dbcon = variable_get('staffdb_connection_name');
-      if (isset($dbcon) && $dbcon != "") {
-        db_set_active($dbcon);
-      }
-      else {
-        db_set_active('remote');
-      }
-      // Execute query
+      db_set_active('remote');
       $result = db_query($emp_base_q);
-      // Revert to default db connection
       db_set_active();
     }
 
@@ -1468,12 +1486,9 @@ function staffdb_node_presave($node) {
         }
       }
     }
-
-
   }
 
-
-  if ($node->type == 'employee_location' && $node->nid && ($update_rights['admin'] == 'true' || $update_rights['user'] == 'true')) {
+  if ($node->type == 'employee_location' && isset($node->nid) && ($update_rights['admin'] == 'true' || $update_rights['user'] == 'true')) {
     // Get local location info
     $emploc = entity_metadata_wrapper('node', $node);
     if ($emploc->title) {
