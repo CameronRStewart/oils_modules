@@ -187,15 +187,8 @@ function createNewCourseInfoEntity($data, $type) {
             else {
                 $subjects[0] = $data['subject'];
             }
-            $values = array(
-                'type' => 'department',
-                'uid' => $user->uid,
-                'status' => 1,
-                'comment' => 0,
-                'promote' => 0,
-            );
-            $entity = entity_create('node', $values);
-            $wrapper = entity_metadata_wrapper('node', $entity);
+
+            list ($entity, $wrapper) = createEntity('department');
 
             // Set all values
             if (isset($attributes["code"]) && !empty($attributes["code"])) {
@@ -206,7 +199,7 @@ function createNewCourseInfoEntity($data, $type) {
             }
             // Now we have to set an entity reference for every associated subject.
             foreach ($subjects as $subject) {
-                $subject_nid = buildCourseEntities($subject, 'subject'); // <---------------------------------------------------------------------
+                $subject_nid = buildCourseEntities($subject, 'subject');
                 $entity->field_subject[$entity->language][]['target_id'] = $subject_nid;
             }
             // The End - Save It
@@ -221,15 +214,8 @@ function createNewCourseInfoEntity($data, $type) {
             else {
                 $courses[0] = $data['course'];
             }
-            $values = array(
-                'type' => 'subject',
-                'uid' => $user->uid,
-                'status' => 1,
-                'comment' => 0,
-                'promote' => 0,
-            );
-            $entity = entity_create('node', $values);
-            $wrapper = entity_metadata_wrapper('node', $entity);
+
+            list ($entity, $wrapper) = createEntity('subject');
 
             // Set all values
             if(isset($attributes["code"]) && !empty($attributes["code"])) {
@@ -255,15 +241,8 @@ function createNewCourseInfoEntity($data, $type) {
             else {
                 $sections[0] = $data['section'];
             }
-            $values = array(
-                'type' => 'course',
-                'uid' => $user->uid,
-                'status' => 1,
-                'comment' => 0,
-                'promote' => 0,
-            );
-            $entity = entity_create('node', $values);
-            $wrapper = entity_metadata_wrapper('node', $entity);
+
+            list ($entity, $wrapper) = createEntity('course');
 
             // Set all values
             if(isset($attributes["number"]) && !empty($attributes["number"])) {
@@ -276,11 +255,101 @@ function createNewCourseInfoEntity($data, $type) {
                 $wrapper->body->value->set($data["catalog-description"]);
             }
 
+            foreach ($sections as $section) {
+                $section_nid = buildCourseEntities($section, 'section');
+                $entity->field_section[$entity->language][]['target_id'] = $section_nid;
+            }
+
             $wrapper->save();
             break;
 
         case 'section':
-            //code
+            $attributes = $data['@attributes'];
+
+            if(testNewEntityPlurality($data['instructors']['instructor'])){
+                $instructors = $data['instructors']['instructor'];
+            }
+            else {
+                $instructors[0] = $data['instructors']['instructor'];
+            }
+
+
+            list ($entity, $wrapper) = createEntity('section');
+
+            // Set all values
+            if(isset($attributes["crn"]) && !empty($attributes["crn"])) {
+                $wrapper->title->set($attributes["crn"]);
+            }
+            if(isset($attributes["number"]) && !empty($attributes["number"])) {
+                $wrapper->field_number->set($attributes["number"]);
+            }
+            if(isset($attributes["part-of-term"]) && !empty($attributes["part-of-term"])) {
+                $wrapper->field_part_of_term->set($attributes["part-of-term"]);
+            }
+            if(isset($attributes["status"]) && !empty($attributes["status"])) {
+                $wrapper->field_status->set($attributes["status"]);
+            }
+            if(isset($data["text"]) && !empty($data["text"])) {
+                $wrapper->body->value->set($data["text"]);
+            }
+            if(isset($data["section-title"]) && !empty($data["section-title"])) {
+                $wrapper->field_section_title->set($data["section-title"]);
+            }
+            if(isset($data["section-title"]) && !empty($data["section-title"])) {
+                $wrapper->field_section_title->set($data["section-title"]);
+            }
+            /* This is bad, the assumption is that there can be multiple meeting-time
+             * fields for each section somehow.  Right now I am only taking the first.
+             * This needs to be fixed.
+             *
+             * Also, this is named very poorly.  It couldnt change from its original name
+             * to start-date, hence date_range for the field name.
+             */
+            if(isset($data["meeting-times"]['meeting-time']['start-date']) && !empty($data["meeting-times"]['meeting-time']['start-date'])) {
+                $wrapper->field_date_range->set($data["meeting-times"]['meeting-time']['start-date']);
+            }
+            if(isset($data["meeting-times"]['meeting-time']['end-date']) && !empty($data["meeting-times"]['meeting-time']['end-date'])) {
+                $wrapper->field_end_date->set($data["meeting-times"]['meeting-time']['end-date']);
+            }
+
+            //field_meeting_days
+
+            //field_meeting_time
+
+            //field_end_time
+
+            //field_building_code
+
+            //field_building_name
+
+            //field_room_number
+
+            //field_instructor (entity ref)
+
+            //field_instructional_method
+
+            //field_delivery_type
+
+            //field_credits
+
+            //field_fees
+
+            //field_status
+
+            //field_waitlist
+
+            //field_waitlist_max
+
+            //field_enrollment
+
+            //field_enrollment_max
+
+
+
+
+
+
+
             break;
 
         case 'instructor':
@@ -317,4 +386,20 @@ function updateCourseInfoEntity($data, $type) {
             //code
             break;
     }
+}
+
+
+function createEntity($type) {
+    global $user;
+    $values = array(
+        'type' => $type,
+        'uid' => $user->uid,
+        'status' => 1,
+        'comment' => 0,
+        'promote' => 0,
+    );
+    $entity = entity_create('node', $values);
+    $wrapper = entity_metadata_wrapper('node', $entity);
+
+    return array($entity, $wrapper);
 }
