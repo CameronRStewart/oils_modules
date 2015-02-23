@@ -672,9 +672,6 @@ function makeDirectory($dirArray, $sort = NULL) {
 
 function massage_employee_data($resultset, $options = NULL) {
   foreach ($resultset as $val) {
-    if (isset($val->id) && $val->id != "") {
-      $varArray[$val->id]["id"][] = $val->id;
-    }
     if (empty($varArray[$val->id]["dept"])) {
       $varArray[$val->id] = array(
         "dept" => array(),
@@ -682,6 +679,9 @@ function massage_employee_data($resultset, $options = NULL) {
         "subjects" => array(),
         "website" => array()
       );
+    }
+    if (isset($val->id) && $val->id != "") {
+      $varArray[$val->id]["id"] = $val->id;
     }
     if (isset($val->first_name) && $val->first_name != "") {
       $varArray[$val->id]["first_name"] = $val->first_name;

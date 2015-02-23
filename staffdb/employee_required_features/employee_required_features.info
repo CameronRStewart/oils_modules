@@ -73,6 +73,7 @@ features[taxonomy][] = rank
 features[taxonomy][] = research_interests
 features[taxonomy][] = subjects
 features[taxonomy][] = web_sites
+features[user_role][] = employee updater
 features[views_view][] = location_selection_list
 features_exclude[dependencies][ctools] = ctools
 features_exclude[dependencies][options] = options
