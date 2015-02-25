@@ -74,7 +74,7 @@ function load_course_info_from_web() {
          * For the time being, we are starting with the creation
          * of Departments and moving downwards through the tree.
          */
-        buildCourseEntities($data['department'], 'department');
+        buildCourseInfoEntities($data['department'], 'department');
 
 
     }
@@ -83,30 +83,32 @@ function load_course_info_from_web() {
 }
 
 
+function testNewEntityPlurality($data){
+    if(sizeof($data) > 1){
+        if(array_key_exists(0, $data)){
+            return TRUE;
+        }
+        else {
+            return FALSE;
+        }
+    }
+    else {
+        return FALSE;
+    }
+}
+
+
+
 /*
- * General function to start entity creation process.
- * This determines whether entity already exists and shunts it
- * to either be created or updated.
+ * This creates a new node of type $type with data in $data
  *
- * @param $data - Subset of XML data to be processed into entity
- * @param $type - The type of entity to be created (department, course, section, etc...)
+ * @param $data - subset of XML data, hopefully beginning at a value of type $type.
+ * @param $type - type of entity to create
  *
  * @return node_id
  */
-function buildCourseEntities($data, $type) {
-
-    dpm($type);
-    dpm($data);
-
-    /*
-     * How to check if there are multiples of the object you are inserting:
-     * e.x. - if department['@attributes'] doesnt exist, then you probably
-     * have something like department[0]['@attributes']
-     *
-     * Two ideas to check:
-     * 1) If children of department are named as ints
-     * 2) If @attributes doesnt exist as a direct child.
-     */
+function buildCourseInfoEntities($data, $type) {
+    global $user;
 
 
     $title_key = "";
@@ -132,70 +134,32 @@ function buildCourseEntities($data, $type) {
             break;
     }
 
-    /*
-    * Start moving through data, our assumed top level is College
-    */
-    $existing_entity_list = db_query('select nid, title from {node} n where n.type = :type', array(':type' => $type));
+    // If top level node from $data doesnt already exist
+    //  list ($entity, $wrapper) = createEntity($type);
+    // else
+    //  get nid of existing node
+    //  create entity metadata wrapper from it
+    $query = new EntityFieldQuery();
+    // Query employee table for $instructor['email']
+    $query->entityCondition('entity_type', 'node')
+        ->entityCondition('bundle', $type)
+        ->propertyCondition('title', $data['@attributes'][$title_key]);
 
-    /* Need to check if there is anything in existing_entity_list.
-     * If there isnt, we just createNewCourseInfoEntity instead of checking array_key_exists.
-     *
-     */
+    $result = $query->execute();
 
-    if($existing_entity_list && $existing_entity_list->rowCount() > 0) {
-        foreach ($existing_entity_list as $existing_entity) {
-            $entity_list["$existing_entity->title"] = $existing_entity->nid;
-        }
-
-        // Sloppy test to see if there is more than one entity of this type
-        $new_entity = $data;
-        $new_entity_title = $new_entity['@attributes'][$title_key];
-        if (array_key_exists($new_entity_title, $entity_list)) {
-            return updateCourseInfoEntity($new_entity, $type);
-        } else {
-            return createNewCourseInfoEntity($new_entity, $type);
-        }
+    if(!empty($result['node'])){
+        $entity = node_load($result['node']);
+        $wrapper = entity_metadata_wrapper('node', $entity);
     }
     else {
-        return createNewCourseInfoEntity($data, $type);
+        list ($entity, $wrapper) = createEntity($type);
     }
 
-}
 
-
-function testNewEntityPlurality($data){
-    dpm("Plural Data Size: " . sizeof($data));
-    if(sizeof($data) > 1){
-        if(array_key_exists(0, $data)){
-            return TRUE;
-        }
-        else {
-            return FALSE;
-        }
-    }
-    else {
-        return FALSE;
-    }
-}
-
-
-
-/*
- * This creates a new node of type $type with data in $data
- *
- * @param $data - subset of XML data, hopefully beginning at a value of type $type.
- * @param $type - type of entity to create
- *
- * @return node_id
- */
-function createNewCourseInfoEntity($data, $type) {
-    global $user;
     switch ($type) {
         case 'department':
             $attributes = $data['@attributes'];
             // Need to test for subject plurality here
-            dpm('department:');
-            dpm($data['subject']);
             if (testNewEntityPlurality($data['subject'])){
                 // Hacky, but makes the foreach work no matter what.
                 $subjects = $data['subject'];
@@ -204,7 +168,6 @@ function createNewCourseInfoEntity($data, $type) {
                 $subjects[0] = $data['subject'];
             }
 
-            list ($entity, $wrapper) = createEntity('department');
 
             // Set all values
             if (isset($attributes["code"]) && !empty($attributes["code"])) {
@@ -215,7 +178,7 @@ function createNewCourseInfoEntity($data, $type) {
             }
             // Now we have to set an entity reference for every associated subject.
             foreach ($subjects as $subject) {
-                $subject_nid = buildCourseEntities($subject, 'subject');
+                $subject_nid = buildCourseInfoEntities($subject, 'subject');
                 $entity->field_subject[$entity->language][]['target_id'] = $subject_nid;
             }
             // The End - Save It
@@ -224,8 +187,6 @@ function createNewCourseInfoEntity($data, $type) {
 
         case 'subject':
             $attributes = $data['@attributes'];
-            dpm('subject:');
-            dpm($data['course']);
             if (testNewEntityPlurality($data['course'])){
                 $courses = $data['course'];
             }
@@ -233,7 +194,6 @@ function createNewCourseInfoEntity($data, $type) {
                 $courses[0] = $data['course'];
             }
 
-            list ($entity, $wrapper) = createEntity('subject');
 
             // Set all values
             if(isset($attributes["code"]) && !empty($attributes["code"])) {
@@ -244,7 +204,7 @@ function createNewCourseInfoEntity($data, $type) {
             }
 
             foreach ($courses as $course){
-                $course_nid = buildCourseEntities($course, 'course');
+                $course_nid = buildCourseInfoEntities($course, 'course');
                 $entity->field_course[$entity->language][]['target_id'] = $course_nid;
             }
 
@@ -253,8 +213,6 @@ function createNewCourseInfoEntity($data, $type) {
 
         case 'course':
             $attributes = $data['@attributes'];
-            dpm('course:');
-            dpm($data['section']);
             if(testNewEntityPlurality($data['section'])){
                 $sections = $data['section'];
             }
@@ -262,7 +220,6 @@ function createNewCourseInfoEntity($data, $type) {
                 $sections[0] = $data['section'];
             }
 
-            list ($entity, $wrapper) = createEntity('course');
 
             // Set all values
             if(isset($attributes["number"]) && !empty($attributes["number"])) {
@@ -276,7 +233,7 @@ function createNewCourseInfoEntity($data, $type) {
             }
 
             foreach ($sections as $section) {
-                $section_nid = buildCourseEntities($section, 'section');
+                $section_nid = buildCourseInfoEntities($section, 'section');
                 $entity->field_section[$entity->language][]['target_id'] = $section_nid;
             }
 
@@ -285,9 +242,6 @@ function createNewCourseInfoEntity($data, $type) {
 
         case 'section':
             $attributes = $data['@attributes'];
-
-
-            list ($entity, $wrapper) = createEntity('section');
 
             // Set all values
 
@@ -346,8 +300,6 @@ function createNewCourseInfoEntity($data, $type) {
                 if(isset($data["meeting-times"]['meeting-time']['days']) && !empty($data["meeting-times"]['meeting-time']['days'])){
                     $days = array();
                     if (!empty($data['meeting-times']['meeting-time']['days']['day'])) {
-                        dpm('section 1:');
-                        dpm($data['meeting-times']['meeting-time']['days']['day']);
                         if (testNewEntityPlurality($data['meeting-times']['meeting-time']['days']['day'])) {
                             $days = $data['meeting-times']['meeting-time']['days']['day'];
                         } else {
@@ -438,8 +390,6 @@ function createNewCourseInfoEntity($data, $type) {
 
             if(!empty($data['instructors']['instructor'])) {
                 if (testNewEntityPlurality($data['instructors']['instructor'])) {
-                    dpm('section 2:');
-                    dpm($data['instructors']['instructor']);
                     $instructors = $data['instructors']['instructor'];
                 } else {
                     $instructors[0] = $data['instructors']['instructor'];
@@ -498,34 +448,6 @@ function createNewCourseInfoEntity($data, $type) {
     }
     return $wrapper->nid->raw();
 
-}
-
-/*
- * This updates an existing node of type $type with data in $data
- *
- * @param $data - subset of XML data, hopefully beginning at a value of type $type.
- * @param $type - type of entity to create
- *
- * @return node_id
- */
-function updateCourseInfoEntity($data, $type) {
-    switch ($type) {
-        case 'department':
-            //code
-            break;
-        case 'subject':
-            //code
-            break;
-        case 'course':
-            //code
-            break;
-        case 'section':
-            //code
-            break;
-        case 'instructor':
-            //code
-            break;
-    }
 }
 
 
