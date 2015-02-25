@@ -164,8 +164,14 @@ function buildCourseEntities($data, $type) {
 
 
 function testNewEntityPlurality($data){
-    if(array_key_exists(0, $data)){
-        return TRUE;
+    dpm("Plural Data Size: " . sizeof($data));
+    if(sizeof($data) > 1){
+        if(array_key_exists(0, $data)){
+            return TRUE;
+        }
+        else {
+            return FALSE;
+        }
     }
     else {
         return FALSE;
@@ -188,6 +194,8 @@ function createNewCourseInfoEntity($data, $type) {
         case 'department':
             $attributes = $data['@attributes'];
             // Need to test for subject plurality here
+            dpm('department:');
+            dpm($data['subject']);
             if (testNewEntityPlurality($data['subject'])){
                 // Hacky, but makes the foreach work no matter what.
                 $subjects = $data['subject'];
@@ -216,6 +224,8 @@ function createNewCourseInfoEntity($data, $type) {
 
         case 'subject':
             $attributes = $data['@attributes'];
+            dpm('subject:');
+            dpm($data['course']);
             if (testNewEntityPlurality($data['course'])){
                 $courses = $data['course'];
             }
@@ -243,6 +253,8 @@ function createNewCourseInfoEntity($data, $type) {
 
         case 'course':
             $attributes = $data['@attributes'];
+            dpm('course:');
+            dpm($data['section']);
             if(testNewEntityPlurality($data['section'])){
                 $sections = $data['section'];
             }
@@ -334,6 +346,8 @@ function createNewCourseInfoEntity($data, $type) {
                 if(isset($data["meeting-times"]['meeting-time']['days']) && !empty($data["meeting-times"]['meeting-time']['days'])){
                     $days = array();
                     if (!empty($data['meeting-times']['meeting-time']['days']['day'])) {
+                        dpm('section 1:');
+                        dpm($data['meeting-times']['meeting-time']['days']['day']);
                         if (testNewEntityPlurality($data['meeting-times']['meeting-time']['days']['day'])) {
                             $days = $data['meeting-times']['meeting-time']['days']['day'];
                         } else {
@@ -424,6 +438,8 @@ function createNewCourseInfoEntity($data, $type) {
 
             if(!empty($data['instructors']['instructor'])) {
                 if (testNewEntityPlurality($data['instructors']['instructor'])) {
+                    dpm('section 2:');
+                    dpm($data['instructors']['instructor']);
                     $instructors = $data['instructors']['instructor'];
                 } else {
                     $instructors[0] = $data['instructors']['instructor'];
