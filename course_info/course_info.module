@@ -134,11 +134,7 @@ function buildCourseInfoEntities($data, $type) {
             break;
     }
 
-    // If top level node from $data doesnt already exist
-    //  list ($entity, $wrapper) = createEntity($type);
-    // else
-    //  get nid of existing node
-    //  create entity metadata wrapper from it
+
     $query = new EntityFieldQuery();
     // Query employee table for $instructor['email']
     $query->entityCondition('entity_type', 'node')
@@ -148,7 +144,8 @@ function buildCourseInfoEntities($data, $type) {
     $result = $query->execute();
 
     if(!empty($result['node'])){
-        $entity = node_load($result['node']);
+        dpm(current($result['node'])->nid);
+        $entity = node_load(current($result['node'])->nid);
         $wrapper = entity_metadata_wrapper('node', $entity);
     }
     else {
@@ -420,6 +417,7 @@ function buildCourseInfoEntities($data, $type) {
                         $entity->field_instructor[$entity->language][]['target_id'] = $nid;
 
                     } else {
+                        // TODO: create instructor in Employee Table if they dont exist.
                         //Do Stuff
                     }
 
