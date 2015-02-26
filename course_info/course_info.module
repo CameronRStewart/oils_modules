@@ -413,7 +413,7 @@ function buildCourseInfoEntities($data, $type) {
                         }
 
                         $nid = $nids[0];
-                        $node = node_load($nid);
+                        //$node = node_load($nid);
                         $entity->field_instructor[$entity->language][]['target_id'] = $nid;
 
                     } else {
