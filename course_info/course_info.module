@@ -74,7 +74,8 @@ function load_course_info_from_web() {
          * For the time being, we are starting with the creation
          * of Departments and moving downwards through the tree.
          */
-        buildCourseInfoEntities($data['department'], 'department');
+        $entity_nid_list = buildEntityLists();
+        buildCourseInfoEntities($data['department'], 'department', $entity_nid_list);
 
 
     }
@@ -97,7 +98,51 @@ function testNewEntityPlurality($data){
     }
 }
 
+function buildEntityLists($entity_type_list = array()) {
 
+    if(!isset($entity_type_list) || empty($entity_type_list)){
+        $entity_type_list = array('department', 'subject', 'course', 'section', 'employee');
+    }
+
+    $entity_nid_list = array();
+
+    foreach ($entity_type_list as $entity_type) {
+
+        $entity_nid_list[$entity_type] = array();
+
+
+        // I have to do something special with instructors since I dont key off of
+        // Their name, I key off of their email (it's safer and unique).
+        if ($entity_type == 'employee') {
+            $query = new EntityFieldQuery();
+
+            $query->entityCondition('entity_type', 'node')
+                ->entityCondition('bundle', $entity_type)
+                ->fieldCondition('field_email');
+
+            $result = $query->execute();
+
+            $nodes = node_load_multiple(array_keys($result['node']));
+
+            foreach ($nodes as $node) {
+                $entity_nid_list[$entity_type][$node->field_email['und'][0]['value']] = $node->nid;
+            }
+
+        }
+        else {
+            $result = db_query("SELECT n.nid, n.title FROM {node} n WHERE n.type = :type ", array(':type' => $entity_type));
+
+            foreach ($result as $record) {
+                $entity_nid_list[$entity_type][$record->title] = $record->nid;
+            }
+        }
+
+    }
+
+    dpm($entity_nid_list);
+    return $entity_nid_list;
+
+}
 
 /*
  * This creates a new node of type $type with data in $data
@@ -107,7 +152,7 @@ function testNewEntityPlurality($data){
  *
  * @return node_id
  */
-function buildCourseInfoEntities($data, $type) {
+function buildCourseInfoEntities($data, $type, $entity_nid_list) {
     global $user;
 
 
@@ -135,17 +180,12 @@ function buildCourseInfoEntities($data, $type) {
     }
 
 
-    $query = new EntityFieldQuery();
-    // Query employee table for $instructor['email']
-    $query->entityCondition('entity_type', 'node')
-        ->entityCondition('bundle', $type)
-        ->propertyCondition('title', $data['@attributes'][$title_key]);
+    $current_title_key = $data['@attributes'][$title_key];
+    $entities_of_this_type = $entity_nid_list[$type];
 
-    $result = $query->execute();
-
-    if(!empty($result['node'])){
-        dpm(current($result['node'])->nid);
-        $entity = node_load(current($result['node'])->nid);
+    if(array_key_exists($current_title_key, $entities_of_this_type)){
+        $entity_nid = $entities_of_this_type[$current_title_key];
+        $entity = node_load($entity_nid);
         $wrapper = entity_metadata_wrapper('node', $entity);
     }
     else {
@@ -174,9 +214,16 @@ function buildCourseInfoEntities($data, $type) {
                 $wrapper->field_name->set($attributes["name"]);
             }
             // Now we have to set an entity reference for every associated subject.
+            $subject_count = 0;
+            /*
+             * Clear out existing entity references due to bug-ish
+             * behavior in adding entity references.
+             */
+            $entity->field_subject[$entity->language] = array();
             foreach ($subjects as $subject) {
-                $subject_nid = buildCourseInfoEntities($subject, 'subject');
-                $entity->field_subject[$entity->language][]['target_id'] = $subject_nid;
+                $subject_nid = buildCourseInfoEntities($subject, 'subject', $entity_nid_list);
+                $entity->field_subject[$entity->language][$subject_count]['target_id'] = $subject_nid;
+                $subject_count++;
             }
             // The End - Save It
             $wrapper->save();
@@ -200,9 +247,16 @@ function buildCourseInfoEntities($data, $type) {
                 $wrapper->field_name->set($attributes["name"]);
             }
 
+            $course_count = 0;
+            /*
+             * Clear out existing entity references due to bug-ish
+             * behavior in adding entity references.
+             */
+            $entity->field_course[$entity->language] = array();
             foreach ($courses as $course){
-                $course_nid = buildCourseInfoEntities($course, 'course');
-                $entity->field_course[$entity->language][]['target_id'] = $course_nid;
+                $course_nid = buildCourseInfoEntities($course, 'course', $entity_nid_list);
+                $entity->field_course[$entity->language][$course_count]['target_id'] = $course_nid;
+                $course_count++;
             }
 
             $wrapper->save();
@@ -229,9 +283,16 @@ function buildCourseInfoEntities($data, $type) {
                 $wrapper->body->value->set($data["catalog-description"]);
             }
 
+            $section_count = 0;
+            /*
+             * Clear out existing entity references due to bug-ish
+             * behavior in adding entity references.
+             */
+            $entity->field_section[$entity->language] = array();
             foreach ($sections as $section) {
-                $section_nid = buildCourseInfoEntities($section, 'section');
-                $entity->field_section[$entity->language][]['target_id'] = $section_nid;
+                $section_nid = buildCourseInfoEntities($section, 'section', $entity_nid_list);
+                $entity->field_section[$entity->language][$section_count]['target_id'] = $section_nid;
+                $section_count++;
             }
 
             $wrapper->save();
@@ -391,7 +452,14 @@ function buildCourseInfoEntities($data, $type) {
                 } else {
                     $instructors[0] = $data['instructors']['instructor'];
                 }
+
                 //field_instructor (entity ref)
+                /*
+                 * Due to the way that entity references are placed in a node in Drupal,
+                 * I apparently have to keep a count and simply replace the entire
+                 * instructors field every time.
+                 */
+                $instructor_count = 0;
                 foreach ($instructors as $instructor) {
                     // Look up Employee table
                     $query = new EntityFieldQuery();
@@ -414,7 +482,10 @@ function buildCourseInfoEntities($data, $type) {
 
                         $nid = $nids[0];
                         //$node = node_load($nid);
-                        $entity->field_instructor[$entity->language][]['target_id'] = $nid;
+                        $entity->field_instructor[$entity->language] = array();
+                        //dpm($entity->field_instructor[$entity->language]);
+                        $entity->field_instructor[$entity->language][$instructor_count]['target_id'] = $nid;
+                        $instructor_count++;
 
                     } else {
                         // TODO: create instructor in Employee Table if they dont exist.
