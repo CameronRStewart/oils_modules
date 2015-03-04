@@ -140,7 +140,6 @@ function buildEntityLists($entity_type_list = array()) {
 
     }
 
-    dpm($entity_nid_list);
     return $entity_nid_list;
 
 }
@@ -484,7 +483,6 @@ function buildCourseInfoEntities($data, $type, $entity_nid_list) {
                         $nid = $nids[0];
                         //$node = node_load($nid);
                         $entity->field_instructor[$entity->language] = array();
-                        //dpm($entity->field_instructor[$entity->language]);
                         $entity->field_instructor[$entity->language][$instructor_count]['target_id'] = $nid;
                         $instructor_count++;
 

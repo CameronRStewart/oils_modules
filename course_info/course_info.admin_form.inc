@@ -4,7 +4,7 @@ function course_info_admin_form($form, &$form_state) {
 
     $form['unm_data_url'] = array(
         '#type' => 'fieldset',
-        '#title' => t('Enter Program of Studies URLs and Titles.'),
+        '#title' => t('Enter URL to course information XML file.'),
         '#prefix' => '<div id="pos-fieldset-wrapper">',
         '#suffix' => '</div>',
     );
@@ -21,23 +21,43 @@ function course_info_admin_form($form, &$form_state) {
         //$result = $result[0];
     }
 
-    foreach($results as $result) {
+    if(isset($result) && !empty($result)) {
         if (!isset($result->url)  || empty($result->url)) {
             $result->url = "http://datastore.unm.edu/schedules/current.xml";
         }
+        foreach($results as $result) {
+            $form['unm_data_url']['url'] = array(
+                '#type' => 'textfield',
+                '#title' => t('URL'),
+                '#description' => t('The URL to grab the UNM Open Data file'),
+                '#required' => TRUE,
+                '#default_value' => $result->url,
+            );
+        }
+    } else {
+        $url = "http://datastore.unm.edu/schedules/current.xml";
         $form['unm_data_url']['url'] = array(
             '#type' => 'textfield',
             '#title' => t('URL'),
             '#description' => t('The URL to grab the UNM Open Data file'),
             '#required' => TRUE,
-            '#default_value' => $result->url,
+            '#default_value' => $url,
+
         );
     }
 
 
+
     $form['submit'] = array(
         '#type' => 'submit',
-        '#value' => t('Save Configuration'),
+        '#value' => t('Save URL'),
+        '#submit' => array('course_info_admin_form_submit'),
+    );
+
+    $form['reload'] = array(
+        '#type' => 'submit',
+        '#value' => t('Reload XML'),
+        '#submit' => array('course_info_admin_form_reload_submit'),
     );
 
     return $form;
@@ -79,7 +99,12 @@ function course_info_admin_form_submit($form, &$form_state) {
 
     drupal_set_message('Changes saved.');
 
+}
+
+function course_info_admin_form_reload_submit($form, &$form_state) {
     //Grab UNM Course info file and parse into DB.
     load_course_info_from_web();
+
+    drupal_set_message('XML Reloaded.');
 }
 
