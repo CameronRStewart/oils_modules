@@ -70,6 +70,7 @@ function load_course_info_from_web() {
             $msg = "Unable to retrieve " . $row->url . ", course nodes will not be updated.";
         }
 
+        dpm($data['department']);
         /*
          * For the time being, we are starting with the creation
          * of Departments and moving downwards through the tree.
@@ -488,7 +489,18 @@ function buildCourseInfoEntities($data, $type, $entity_nid_list) {
 
                     } else {
                         // TODO: create instructor in Employee Table if they dont exist.
-                        //Do Stuff
+
+                        // Create a shell account for this employee with the info we have
+                        list ($entity, $wrapper) = createEntity('employee');
+
+                        $wrapper->field_email->set($instructor['email']);
+                        $wrapper->field_first_name->set($instructor['first']);
+                        $wrapper->field_last_name->set($instructor['last']);
+                        $wrapper->field_middle_name->set($instructor['middleInitial']);
+
+                        $entity->field_instructor[$entity->language] = array();
+                        $entity->field_instructor[$entity->language][$instructor_count]['target_id'] = $wrapper->getIdentifier();
+                        $instructor_count++;
                     }
 
 
