@@ -1,0 +1,35 @@
+<?php
+
+
+/**
+ * @return mixed
+ */
+function course_info_schema() {
+    $schema['courses_info_url'] = array(
+        'description' => t('The base table for URL pointing to UNM Course info XML.'),
+        'fields' => array(
+            'id' => array(
+                'description' => t('The primary identifier for courses url.'),
+                'type' => 'serial',
+                'unsigned' => TRUE,
+                'not null' => TRUE
+            ),
+            'url' => array(
+                'description' => t('URL to grab UNM courses data file from.'),
+                'type' => 'varchar',
+                'length' => 255,
+                'not null' => TRUE,
+                'default' => ''
+            ),
+            'updated' => array(
+                'description' => t('UNIX timestamp of last update.'),
+                'type' => 'int',
+                'not null' => FALSE
+            )
+        ),
+        'primary key' => array('id'),
+    );
+
+
+    return $schema;
+}
