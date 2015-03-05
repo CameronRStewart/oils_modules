@@ -1,4 +1,4 @@
-name = Course Info Content Types
+name = course_info_content_types
 description = These are all the necessary content types for the course_info module
 core = 7.x
 package = UNM University Libraries
@@ -125,3 +125,4 @@ features[variable][] = node_submitted_course
 features[variable][] = node_submitted_department
 features[variable][] = node_submitted_section
 features[variable][] = node_submitted_subject
+project path = /Users/cameronstewart/Desktop

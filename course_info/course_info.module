@@ -487,16 +487,36 @@ function buildCourseInfoEntities($data, $type, $entity_nid_list) {
                         $entity->field_instructor[$entity->language][$instructor_count]['target_id'] = $nid;
                         $instructor_count++;
 
-                    } else {
+                    }
+
+                    else {
                         // TODO: create instructor in Employee Table if they dont exist.
 
                         // Create a shell account for this employee with the info we have
                         list ($entity, $wrapper) = createEntity('employee');
 
-                        $wrapper->field_email->set($instructor['email']);
-                        $wrapper->field_first_name->set($instructor['first']);
-                        $wrapper->field_last_name->set($instructor['last']);
-                        $wrapper->field_middle_name->set($instructor['middleInitial']);
+                        $fullname = '';
+
+                        if(isset($instructor['email']) && !empty($instructor['email'])){
+                            $wrapper->field_email->set($instructor['email']);
+                        }
+
+                        if(isset($instructor['first']) && !empty($instructor['first'])) {
+                            $wrapper->field_first_name->set($instructor['first']);
+                            $fullname = $instructor['first'];
+                        }
+
+                        if(isset($instructor['middleInitial']) && !empty($instructor['middleInitial'])) {
+                            $wrapper->field_middle_name->set($instructor['middleInitial']);
+                            $fullname .= " ".$instructor['middleInitial'];
+                        }
+
+                        if(isset($instructor['last']) && !empty($instructor['last'])) {
+                            $wrapper->field_last_name->set($instructor['last']);
+                            $fullname .= " ".$instructor['last'];
+                        }
+
+                        $wrapper->title->set($fullname);
 
                         $entity->field_instructor[$entity->language] = array();
                         $entity->field_instructor[$entity->language][$instructor_count]['target_id'] = $wrapper->getIdentifier();
