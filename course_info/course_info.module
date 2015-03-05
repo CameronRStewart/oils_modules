@@ -69,8 +69,7 @@ function load_course_info_from_web() {
         else {
             $msg = "Unable to retrieve " . $row->url . ", course nodes will not be updated.";
         }
-
-        dpm($data['department']);
+        
         /*
          * For the time being, we are starting with the creation
          * of Departments and moving downwards through the tree.
