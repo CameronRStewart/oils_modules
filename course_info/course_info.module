@@ -373,12 +373,12 @@ function buildCourseInfoEntities($data, $type, $entity_nid_list) {
 
                 //field_meeting_time  - corresponds to start-time.
                 if(isset($data["meeting-times"]['meeting-time']['start-time']) && !empty($data["meeting-times"]['meeting-time']['start-time'])) {
-                    $wrapper->field_meeting_time->set($data["meeting-times"]['meeting-time']['start-date']);
+                    $wrapper->field_meeting_time->set($data["meeting-times"]['meeting-time']['start-time']);
                 }
 
                 //field_end_time
                 if(isset($data["meeting-times"]['meeting-time']['end-time']) && !empty($data["meeting-times"]['meeting-time']['end-time'])) {
-                    $wrapper->field_end_time->set($data["meeting-times"]['meeting-time']['end-date']);
+                    $wrapper->field_end_time->set($data["meeting-times"]['meeting-time']['end-time']);
                 }
 
                 //TODO: Test for building code vs. building number or both if they exist.
