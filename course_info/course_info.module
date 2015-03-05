@@ -211,7 +211,7 @@ function buildCourseInfoEntities($data, $type, $entity_nid_list) {
                 $wrapper->title->set($attributes["code"]);
             }
             if (isset($attributes["name"]) && !empty($attributes["name"])) {
-                $wrapper->field_name->set($attributes["name"]);
+                $wrapper->field_department_name->set($attributes["name"]);
             }
             // Now we have to set an entity reference for every associated subject.
             $subject_count = 0;
@@ -244,7 +244,7 @@ function buildCourseInfoEntities($data, $type, $entity_nid_list) {
                 $wrapper->title->set($attributes["code"]);
             }
             if (isset($attributes["name"]) && !empty($attributes["name"])) {
-                $wrapper->field_name->set($attributes["name"]);
+                $wrapper->field_subject_name->set($attributes["name"]);
             }
 
             $course_count = 0;
@@ -277,7 +277,7 @@ function buildCourseInfoEntities($data, $type, $entity_nid_list) {
                 $wrapper->title->set($attributes["number"]);
             }
             if(isset($attributes["title"]) && !empty($attributes["title"])) {
-                $wrapper->field_title->set($attributes["title"]);
+                $wrapper->field_course_title->set($attributes["title"]);
             }
             if(isset($data["catalog-description"]) && !empty($data["catalog-description"])) {
                 $wrapper->body->value->set($data["catalog-description"]);

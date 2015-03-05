@@ -60,6 +60,51 @@ function course_info_content_types_field_default_field_instances() {
     ),
   );
 
+  // Exported field_instance: 'node-course-field_course_title'
+  $field_instances['node-course-field_course_title'] = array(
+    'bundle' => 'course',
+    'default_value' => NULL,
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'text',
+        'settings' => array(),
+        'type' => 'text_default',
+        'weight' => 0,
+      ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+    ),
+    'entity_type' => 'node',
+    'field_name' => 'field_course_title',
+    'label' => 'Course Title',
+    'required' => 0,
+    'settings' => array(
+      'linkit' => array(
+        'button_text' => 'Search',
+        'enable' => 0,
+        'profile' => '',
+      ),
+      'text_processing' => 0,
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'text',
+      'settings' => array(
+        'size' => 60,
+      ),
+      'type' => 'text_textfield',
+      'weight' => 0,
+    ),
+  );
+
   // Exported field_instance: 'node-course-field_section'
   $field_instances['node-course-field_section'] = array(
     'bundle' => 'course',
@@ -100,51 +145,6 @@ function course_info_content_types_field_default_field_instances() {
       ),
       'type' => 'entityreference_autocomplete',
       'weight' => 2,
-    ),
-  );
-
-  // Exported field_instance: 'node-course-field_title'
-  $field_instances['node-course-field_title'] = array(
-    'bundle' => 'course',
-    'default_value' => NULL,
-    'deleted' => 0,
-    'description' => '',
-    'display' => array(
-      'default' => array(
-        'label' => 'above',
-        'module' => 'text',
-        'settings' => array(),
-        'type' => 'text_default',
-        'weight' => 0,
-      ),
-      'teaser' => array(
-        'label' => 'above',
-        'settings' => array(),
-        'type' => 'hidden',
-        'weight' => 0,
-      ),
-    ),
-    'entity_type' => 'node',
-    'field_name' => 'field_title',
-    'label' => 'Title',
-    'required' => 0,
-    'settings' => array(
-      'linkit' => array(
-        'button_text' => 'Search',
-        'enable' => 0,
-        'profile' => '',
-      ),
-      'text_processing' => 0,
-      'user_register_form' => FALSE,
-    ),
-    'widget' => array(
-      'active' => 1,
-      'module' => 'text',
-      'settings' => array(
-        'size' => 60,
-      ),
-      'type' => 'text_textfield',
-      'weight' => 0,
     ),
   );
 
@@ -192,8 +192,8 @@ function course_info_content_types_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-department-field_name'
-  $field_instances['node-department-field_name'] = array(
+  // Exported field_instance: 'node-department-field_department_name'
+  $field_instances['node-department-field_department_name'] = array(
     'bundle' => 'department',
     'default_value' => NULL,
     'deleted' => 0,
@@ -214,8 +214,8 @@ function course_info_content_types_field_default_field_instances() {
       ),
     ),
     'entity_type' => 'node',
-    'field_name' => 'field_name',
-    'label' => 'Name',
+    'field_name' => 'field_department_name',
+    'label' => 'Department Name',
     'required' => 0,
     'settings' => array(
       'linkit' => array(
@@ -1364,8 +1364,8 @@ function course_info_content_types_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-subject-field_name'
-  $field_instances['node-subject-field_name'] = array(
+  // Exported field_instance: 'node-subject-field_subject_name'
+  $field_instances['node-subject-field_subject_name'] = array(
     'bundle' => 'subject',
     'default_value' => NULL,
     'deleted' => 0,
@@ -1386,8 +1386,8 @@ function course_info_content_types_field_default_field_instances() {
       ),
     ),
     'entity_type' => 'node',
-    'field_name' => 'field_name',
-    'label' => 'Name',
+    'field_name' => 'field_subject_name',
+    'label' => 'Subject Name',
     'required' => 0,
     'settings' => array(
       'linkit' => array(
@@ -1415,8 +1415,10 @@ function course_info_content_types_field_default_field_instances() {
   t('Building Code');
   t('Building Name');
   t('Course');
+  t('Course Title');
   t('Credits');
   t('Delivery Type');
+  t('Department Name');
   t('Description');
   t('End Date');
   t('End Time');
@@ -1427,7 +1429,6 @@ function course_info_content_types_field_default_field_instances() {
   t('Instructor');
   t('Long form name of building this class takes place in');
   t('Meeting Days');
-  t('Name');
   t('Number');
   t('Part of Term');
   t('Room Number');
@@ -1439,9 +1440,9 @@ function course_info_content_types_field_default_field_instances() {
   t('Start Time');
   t('Status');
   t('Subject');
+  t('Subject Name');
   t('The optional title of this section');
   t('This is the status of the class (cancelled, active)');
-  t('Title');
   t('Waitlist');
   t('Waitlist Max');
 
