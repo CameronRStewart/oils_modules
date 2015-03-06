@@ -80,7 +80,7 @@ function course_info_admin_form($form, &$form_state) {
 
     $form['reload'] = array(
         '#type' => 'submit',
-        '#value' => t('Reload XML'),
+        '#value' => t('Load XML'),
         '#submit' => array('course_info_admin_form_reload_submit'),
     );
 
@@ -130,8 +130,8 @@ function course_info_admin_form_submit($form, &$form_state) {
 
 function course_info_admin_form_reload_submit($form, &$form_state) {
     //Grab UNM Course info file and parse into DB.
-    load_course_info_from_web();
+    $msg = load_course_info_from_web();
 
-    drupal_set_message('XML Reloaded.');
+    drupal_set_message($msg);
 }
 

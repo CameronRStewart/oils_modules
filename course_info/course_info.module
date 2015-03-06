@@ -64,19 +64,28 @@ function load_course_info_from_web() {
                     break;
                 }
             }
-            $data = new SimpleXMLElement($reader->readOuterXml());
-            $data = drupal_json_decode(drupal_json_encode($data));
+            $tree = $reader->readOuterXml();
+            if(isset($tree) && !empty($tree)) {
+                $data = new SimpleXMLElement($tree);
+                $data = drupal_json_decode(drupal_json_encode($data));
+
+                /*
+                * For the time being, we are starting with the creation
+                * of Departments and moving downwards through the tree.
+                */
+                $entity_nid_list = buildEntityLists();
+                buildCourseInfoEntities($data['department'], 'department', $entity_nid_list);
+                return "XML Loaded";
+            }
+            else {
+                drupal_set_message('The values provided did not yield any data.  Please re-enter your college code or URL.');
+                return "XML Not Reloaded";
+            }
         }
         else {
             $msg = "Unable to retrieve " . $row->url . ", course nodes will not be updated.";
+            return $msg;
         }
-        
-        /*
-         * For the time being, we are starting with the creation
-         * of Departments and moving downwards through the tree.
-         */
-        $entity_nid_list = buildEntityLists();
-        buildCourseInfoEntities($data['department'], 'department', $entity_nid_list);
 
 
     }
