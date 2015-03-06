@@ -50,16 +50,17 @@ function load_course_info_from_web() {
 
     $destination = 'public://';
     // Grab URL of course data file
-    $url_result = db_query('SELECT * FROM courses_info_url');
+    $result = db_query('SELECT * FROM courses_info_admin_extras');
     $msg = '';
     // There should only be one...
     $reader = new XMLReader();
-    foreach ($url_result as $row) {
+    foreach ($result as $row) {
+        $college_code = $row->college_code;
         $file = system_retrieve_file($row->url, $destination, TRUE, FILE_EXISTS_REPLACE);
         if($file) {
             $reader->open($file->uri);
             while($reader->read()){
-                if ($reader->name == 'college' && $reader->getAttribute('code') == 'LL') {
+                if ($reader->name == 'college' && $reader->getAttribute('code') == $college_code) {
                     break;
                 }
             }

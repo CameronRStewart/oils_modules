@@ -5,7 +5,7 @@
  * @return mixed
  */
 function course_info_schema() {
-    $schema['courses_info_url'] = array(
+    $schema['courses_info_admin_extras'] = array(
         'description' => t('The base table for URL pointing to UNM Course info XML.'),
         'fields' => array(
             'id' => array(
@@ -21,11 +21,18 @@ function course_info_schema() {
                 'not null' => TRUE,
                 'default' => ''
             ),
+            'college_code' => array(
+                'description' => t('The assigned code for the college whose data tree we are processing.'),
+                'type' => 'varchar',
+                'length' => 255,
+                'not null' => TRUE,
+                'default' => ''
+            ),
             'updated' => array(
                 'description' => t('UNIX timestamp of last update.'),
                 'type' => 'int',
                 'not null' => FALSE
-            )
+            ),
         ),
         'primary key' => array('id'),
     );

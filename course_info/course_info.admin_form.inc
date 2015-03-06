@@ -2,14 +2,17 @@
 function course_info_admin_form($form, &$form_state) {
     $form = array();
 
+    $form['unm_data_college_code'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Enter UNM assigned letter code for this college.'),
+    );
+
     $form['unm_data_url'] = array(
         '#type' => 'fieldset',
         '#title' => t('Enter URL to course information XML file.'),
-        '#prefix' => '<div id="pos-fieldset-wrapper">',
-        '#suffix' => '</div>',
     );
 
-    $results = db_query('SELECT * FROM courses_info_url');
+    $results = db_query('SELECT * FROM courses_info_admin_extras');
 
     // There should only ever be one result
     $count = $results->rowCount();
@@ -21,11 +24,24 @@ function course_info_admin_form($form, &$form_state) {
         //$result = $result[0];
     }
 
-    if(isset($result) && !empty($result)) {
-        if (!isset($result->url)  || empty($result->url)) {
-            $result->url = "http://datastore.unm.edu/schedules/current.xml";
-        }
+
+    if(isset($results) && !empty($results)) {
+
         foreach($results as $result) {
+            if (!isset($result->url)  || empty($result->url)) {
+                $result->url = "http://datastore.unm.edu/schedules/current.xml";
+            }
+
+            if (!isset($result->college_code) || empty($result->college_code)) {
+                $result->college_code = 'Enter College Code';
+            }
+            $form['unm_data_college_code']['code'] = array(
+                '#type' => 'textfield',
+                '#title' => t('College Code'),
+                '#description' => t('The code for your college in the UNM Open Data file'),
+                '#required' => TRUE,
+                '#default_value' => $result->college_code,
+            );
             $form['unm_data_url']['url'] = array(
                 '#type' => 'textfield',
                 '#title' => t('URL'),
@@ -35,6 +51,14 @@ function course_info_admin_form($form, &$form_state) {
             );
         }
     } else {
+        $college_code = 'Enter College Code';
+        $form['unm_data_college_code']['code'] = array(
+            '#type' => 'textfield',
+            '#title' => t('College Code'),
+            '#description' => t('The code for your college in the UNM Open Data file'),
+            '#required' => TRUE,
+            '#default_value' =>  $college_code,
+        );
         $url = "http://datastore.unm.edu/schedules/current.xml";
         $form['unm_data_url']['url'] = array(
             '#type' => 'textfield',
@@ -50,7 +74,7 @@ function course_info_admin_form($form, &$form_state) {
 
     $form['submit'] = array(
         '#type' => 'submit',
-        '#value' => t('Save URL'),
+        '#value' => t('Save'),
         '#submit' => array('course_info_admin_form_submit'),
     );
 
@@ -79,19 +103,22 @@ function course_info_form_validate($form, &$form_state) {
  */
 function course_info_admin_form_submit($form, &$form_state) {
     $saved_url = $form_state['values']['url'];
-    $exists = db_query('SELECT * FROM courses_info_url')->fetchField();
+    $saved_college_code = $form_state['values']['code'];
+    $exists = db_query('SELECT * FROM courses_info_admin_extras')->fetchField();
 
     if(!$exists) {
-        db_insert('courses_info_url')
+        db_insert('courses_info_admin_extras')
             ->fields(array(
                 'url' => $saved_url,
+                'college_code' => $saved_college_code,
             ))
             ->execute();
     }
     else {
-        db_update('courses_info_url')
+        db_update('courses_info_admin_extras')
             ->fields(array(
                 'url' => $saved_url,
+                'college_code' => $saved_college_code,
             ))
             ->condition('id', 1)
             ->execute();
