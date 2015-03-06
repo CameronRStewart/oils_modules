@@ -122,11 +122,12 @@ function buildEntityLists($entity_type_list = array()) {
 
             $result = $query->execute();
 
-            //TODO: check for error condition here - no employees in DB.
-            $nodes = node_load_multiple(array_keys($result['node']));
+            if(isset($result['node'])) {
+                $nodes = node_load_multiple(array_keys($result['node']));
 
-            foreach ($nodes as $node) {
-                $entity_nid_list[$entity_type][$node->field_email['und'][0]['value']] = $node->nid;
+                foreach ($nodes as $node) {
+                    $entity_nid_list[$entity_type][$node->field_email['und'][0]['value']] = $node->nid;
+                }
             }
 
         }
@@ -336,7 +337,7 @@ function buildCourseInfoEntities($data, $type, $entity_nid_list) {
             /* This is bad, the assumption is that there can be multiple meeting-time
              * fields for each section somehow.  Right now I am only taking the first.
              * This needs to be fixed.
-             * TODO: make meeting-times a multiple value field in sections.
+             * TODO: is there ever a time where there are multiple meeting times?
              *
              * Also, this is named very poorly.  It couldnt change from its original name
              * to start-date, hence date_range for the field name.
@@ -354,7 +355,6 @@ function buildCourseInfoEntities($data, $type, $entity_nid_list) {
                  * This field also exists in the XML data as multiple entries.
                  * I can, for now, just concatenate them together to keep each day as one field 'days.'
                  */
-                //TODO: Assumption: no examples of days as plural.
                 if(isset($data["meeting-times"]['meeting-time']['days']) && !empty($data["meeting-times"]['meeting-time']['days'])){
                     $days = array();
                     if (!empty($data['meeting-times']['meeting-time']['days']['day'])) {
@@ -386,7 +386,7 @@ function buildCourseInfoEntities($data, $type, $entity_nid_list) {
                 if(isset($data["meeting-times"]['meeting-time']['bldg']) && !empty($data["meeting-times"]['meeting-time']['bldg'])) {
                     if (isset($data["meeting-times"]['meeting-time']['bldg']['@attributes']) && !empty($data["meeting-times"]['meeting-time']['bldg']['@attributes'])) {
                         //$wrapper->field_building_code->set($data["meeting-times"]['meeting-time']['bldg']['@attributes']['code']);
-                        //TODO: figure out why $data["meeting-times"]['meeting-time']['bldg']['@attributes']['code'] tries to be an array index
+                        //TODO: $data["meeting-times"]['meeting-time']['bldg']['@attributes']['code'] only seems to show up as an empty string.
                     }
                     else {
                         $wrapper->field_building_name->set($data["meeting-times"]['meeting-time']['bldg']);
@@ -489,7 +489,6 @@ function buildCourseInfoEntities($data, $type, $entity_nid_list) {
                     }
 
                     else {
-                        // TODO: create instructor in Employee Table if they dont exist.
 
                         // Create a shell account for this employee with the info we have
                         list ($entity, $wrapper) = createEntity('employee');
