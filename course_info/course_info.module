@@ -93,21 +93,6 @@ function load_course_info_from_web() {
 
 }
 
-
-function testNewEntityPlurality($data){
-    if(sizeof($data) > 1){
-        if(array_key_exists(0, $data)){
-            return TRUE;
-        }
-        else {
-            return FALSE;
-        }
-    }
-    else {
-        return FALSE;
-    }
-}
-
 function buildEntityLists($entity_type_list = array()) {
 
     if(!isset($entity_type_list) || empty($entity_type_list)){
@@ -491,7 +476,6 @@ function buildCourseInfoEntities($data, $type, $entity_nid_list) {
                         }
 
                         $nid = $nids[0];
-                        //$node = node_load($nid);
                         $entity->field_instructor[$entity->language] = array();
                         $entity->field_instructor[$entity->language][$instructor_count]['target_id'] = $nid;
                         $instructor_count++;
@@ -531,14 +515,6 @@ function buildCourseInfoEntities($data, $type, $entity_nid_list) {
                         $instructor_count++;
                     }
 
-
-                    // If it exists in employee table
-                    // get nid of employee
-                    // $entity->field_instructor[$entity->language][]['target_id'] = $employee_nid
-                    // Else - if it doesnt exist
-                    // Create new Employee
-                    // $entity->field_instructor[$entity->language][]['target_id'] = $employee_nid
-
                 }
             }
 
@@ -573,3 +549,36 @@ function createEntity($type) {
 
     return array($entity, $wrapper);
 }
+
+/*
+ * This is a sort-of hacky specialized function to assess the sub-array at the point passed in.
+ * It tries to infer based based on the output characteristics od json_decode whether there are multiple
+ * values of a certain type.
+ *
+ * ex:
+ *
+ * Say you have a course array: $course.
+ * You can have multiple sections, one section, or none at all.
+ *
+ * $course['section'][0],[1],[2]... implies that there are mulitple sections
+ * $course['section'] ... If there is section data for an individual section below this, then there is only one.
+ *
+ * We therefore have to test whether there is an int in the case of plurality.
+ * In our case the most logical conclusion was to test for '0'.
+ *
+*/
+function testNewEntityPlurality($data){
+    if(sizeof($data) > 1){
+        if(array_key_exists(0, $data)){
+            return TRUE;
+        }
+        else {
+            return FALSE;
+        }
+    }
+    else {
+        return FALSE;
+    }
+}
+
+
