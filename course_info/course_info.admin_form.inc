@@ -25,8 +25,7 @@ function course_info_admin_form($form, &$form_state) {
     }
 
 
-    if(isset($results) && !empty($results)) {
-
+    if(isset($results) && !empty($results) && $count > 0) {
         foreach($results as $result) {
             if (!isset($result->url)  || empty($result->url)) {
                 $result->url = "http://datastore.unm.edu/schedules/current.xml";
