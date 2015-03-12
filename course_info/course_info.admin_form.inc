@@ -119,7 +119,6 @@ function course_info_admin_form_submit($form, &$form_state) {
                 'url' => $saved_url,
                 'college_code' => $saved_college_code,
             ))
-            ->condition('id', 1)
             ->execute();
     }
 
