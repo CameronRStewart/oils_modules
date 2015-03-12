@@ -73,7 +73,7 @@ function load_course_info_from_web() {
                 * For the time being, we are starting with the creation
                 * of Departments and moving downwards through the tree.
                 */
-                $entity_nid_list = buildEntityLists();
+                $entity_nid_list = buildEntityNodeLists();
                 buildCourseInfoEntities($data['department'], 'department', $entity_nid_list);
                 return "XML Loaded";
             }
@@ -93,6 +93,7 @@ function load_course_info_from_web() {
 
 }
 
+// Simply returns an array of all existing nodes' titles and node ids
 function buildEntityLists($entity_type_list = array()) {
 
     if(!isset($entity_type_list) || empty($entity_type_list)){
@@ -140,6 +141,64 @@ function buildEntityLists($entity_type_list = array()) {
 
 }
 
+// Similar to buildEntityLists, however this pre-loads all nodes.
+function buildEntityNodeLists($entity_type_list = array()) {
+
+    if(!isset($entity_type_list) || empty($entity_type_list)){
+        $entity_type_list = array('department', 'subject', 'course', 'section', 'employee');
+    }
+
+    $entity_nid_list = array();
+
+    foreach ($entity_type_list as $entity_type) {
+
+        $entity_nid_list[$entity_type] = array();
+
+
+        // I have to do something special with instructors since I dont key off of
+        // Their name, I key off of their email (it's safer and unique).
+        if ($entity_type == 'employee') {
+            $query = new EntityFieldQuery();
+
+            $query->entityCondition('entity_type', 'node')
+                ->entityCondition('bundle', $entity_type)
+                ->fieldCondition('field_email');
+
+            $result = $query->execute();
+
+            if(isset($result['node'])) {
+                $nodes = node_load_multiple(array_keys($result['node']));
+
+                foreach ($nodes as $node) {
+                    $entity_nid_list[$entity_type][$node->field_email['und'][0]['value']] = $node;
+                }
+            }
+
+        }
+        else {
+            $query = new EntityFieldQuery();
+
+            $query->entityCondition('entity_type', 'node')
+                ->entityCondition('bundle', $entity_type);
+
+            $result = $query->execute();
+
+            if(isset($result['node'])) {
+                $nodes = node_load_multiple(array_keys($result['node']));
+
+                foreach ($nodes as $node) {
+                    $entity_nid_list[$entity_type][$node->title] = $node;
+                }
+            }
+        }
+
+    }
+
+
+    return $entity_nid_list;
+
+}
+
 /*
  * This creates a new node of type $type with data in $data
  *
@@ -149,8 +208,6 @@ function buildEntityLists($entity_type_list = array()) {
  * @return node_id
  */
 function buildCourseInfoEntities($data, $type, $entity_nid_list) {
-    global $user;
-
 
     $title_key = "";
     switch($type) {
@@ -180,8 +237,8 @@ function buildCourseInfoEntities($data, $type, $entity_nid_list) {
     $entities_of_this_type = $entity_nid_list[$type];
 
     if(array_key_exists($current_title_key, $entities_of_this_type)){
-        $entity_nid = $entities_of_this_type[$current_title_key];
-        $entity = node_load($entity_nid);
+        //$entity_nid = $entities_of_this_type[$current_title_key];
+        $entity = $entities_of_this_type[$current_title_key];
         $wrapper = entity_metadata_wrapper('node', $entity);
     }
     else {
@@ -527,7 +584,7 @@ function buildCourseInfoEntities($data, $type, $entity_nid_list) {
             break;
 
         case 'instructor':
-            //code
+            //This is all managed within the code for each 'Section.'
             break;
     }
     return $wrapper->nid->raw();
@@ -580,5 +637,4 @@ function testNewEntityPlurality($data){
         return FALSE;
     }
 }
-
 
