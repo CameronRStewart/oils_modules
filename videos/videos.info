@@ -73,6 +73,7 @@ features[file_display][] = video__media_small__mediafront_file_player
 features[image][] = video_thumbnail_140
 features[image][] = video_thumbnail_220
 features[mediafront][] = default
+features[mediafront_views][] = oils_videos
 features[node][] = video
 features[page_manager_handlers][] = node_view__video
 features[variable][] = comment_anonymous_video

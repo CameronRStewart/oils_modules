@@ -126,6 +126,57 @@ function videos_mediafront_default_presets() {
 }
 
 /**
+ * Implements hook_mediafront_views_default_options().
+ */
+function videos_mediafront_views_default_options() {
+  $options = array(
+    'oils_videos' => array(
+      'field_media_file' => array(
+        'link_to_player' => 1,
+        'field_type' => 'media',
+        'media_type' => 'media',
+        'preview' => 0,
+        'thumbnail' => 0,
+        'custom' => '',
+      ),
+      'mediafront_player' => array(
+        'link_to_player' => 0,
+        'field_type' => 0,
+        'media_type' => 'media',
+        'preview' => 0,
+        'thumbnail' => 0,
+        'custom' => '',
+      ),
+      'nid' => array(
+        'link_to_player' => 0,
+        'field_type' => 0,
+        'media_type' => 'media',
+        'preview' => 0,
+        'thumbnail' => 0,
+        'custom' => '',
+      ),
+      'path' => array(
+        'link_to_player' => 0,
+        'field_type' => 0,
+        'media_type' => 'media',
+        'preview' => 0,
+        'thumbnail' => 0,
+        'custom' => '',
+      ),
+      'title' => array(
+        'link_to_player' => 0,
+        'field_type' => 0,
+        'media_type' => 'media',
+        'preview' => 0,
+        'thumbnail' => 0,
+        'custom' => '',
+      ),
+    ),
+  );
+  return $options;
+}
+
+/**
  * Implements hook_node_info().
  */
 function videos_node_info() {
