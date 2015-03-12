@@ -73,7 +73,7 @@ function load_course_info_from_web() {
                 * For the time being, we are starting with the creation
                 * of Departments and moving downwards through the tree.
                 */
-                $entity_nid_list = buildEntityNodeLists();
+                $entity_nid_list = buildEntityLists();
                 buildCourseInfoEntities($data['department'], 'department', $entity_nid_list);
                 return "XML Loaded";
             }
@@ -237,12 +237,11 @@ function buildCourseInfoEntities($data, $type, $entity_nid_list) {
     $entities_of_this_type = $entity_nid_list[$type];
 
     if(array_key_exists($current_title_key, $entities_of_this_type)){
-        //$entity_nid = $entities_of_this_type[$current_title_key];
         $entity = $entities_of_this_type[$current_title_key];
         $wrapper = entity_metadata_wrapper('node', $entity);
     }
     else {
-        list ($entity, $wrapper) = createEntity($type);
+        $wrapper = createEntity($type);
     }
 
 
@@ -266,17 +265,11 @@ function buildCourseInfoEntities($data, $type, $entity_nid_list) {
             if (isset($attributes["name"]) && !empty($attributes["name"])) {
                 $wrapper->field_department_name->set($attributes["name"]);
             }
-            // Now we have to set an entity reference for every associated subject.
-            $subject_count = 0;
-            /*
-             * Clear out existing entity references due to bug-ish
-             * behavior in adding entity references.
-             */
-            $entity->field_subject[$entity->language] = array();
+
+            $wrapper->field_subject = array();
             foreach ($subjects as $subject) {
                 $subject_nid = buildCourseInfoEntities($subject, 'subject', $entity_nid_list);
-                $entity->field_subject[$entity->language][$subject_count]['target_id'] = $subject_nid;
-                $subject_count++;
+                $wrapper->field_subject[] = $subject_nid;
             }
             // The End - Save It
             $wrapper->save();
@@ -300,16 +293,10 @@ function buildCourseInfoEntities($data, $type, $entity_nid_list) {
                 $wrapper->field_subject_name->set($attributes["name"]);
             }
 
-            $course_count = 0;
-            /*
-             * Clear out existing entity references due to bug-ish
-             * behavior in adding entity references.
-             */
-            $entity->field_course[$entity->language] = array();
+            $wrapper->field_course = array();
             foreach ($courses as $course){
                 $course_nid = buildCourseInfoEntities($course, 'course', $entity_nid_list);
-                $entity->field_course[$entity->language][$course_count]['target_id'] = $course_nid;
-                $course_count++;
+                $wrapper->field_course[] = $course_nid;
             }
 
             $wrapper->save();
@@ -336,16 +323,10 @@ function buildCourseInfoEntities($data, $type, $entity_nid_list) {
                 $wrapper->body->value->set($data["catalog-description"]);
             }
 
-            $section_count = 0;
-            /*
-             * Clear out existing entity references due to bug-ish
-             * behavior in adding entity references.
-             */
-            $entity->field_section[$entity->language] = array();
+            $wrapper->field_section = array();
             foreach ($sections as $section) {
                 $section_nid = buildCourseInfoEntities($section, 'section', $entity_nid_list);
-                $entity->field_section[$entity->language][$section_count]['target_id'] = $section_nid;
-                $section_count++;
+                $wrapper->field_section[] = $section_nid;
             }
 
             $wrapper->save();
@@ -505,13 +486,6 @@ function buildCourseInfoEntities($data, $type, $entity_nid_list) {
                     $instructors[0] = $data['instructors']['instructor'];
                 }
 
-                //field_instructor (entity ref)
-                /*
-                 * Due to the way that entity references are placed in a node in Drupal,
-                 * I apparently have to keep a count and simply replace the entire
-                 * instructors field every time.
-                 */
-                $instructor_count = 0;
                 foreach ($instructors as $instructor) {
                     // Look up Employee table
                     $query = new EntityFieldQuery();
@@ -533,43 +507,43 @@ function buildCourseInfoEntities($data, $type, $entity_nid_list) {
                         }
 
                         $nid = $nids[0];
-                        $entity->field_instructor[$entity->language] = array();
-                        $entity->field_instructor[$entity->language][$instructor_count]['target_id'] = $nid;
-                        $instructor_count++;
+
+                        $wrapper->field_instructor = array();
+                        $wrapper->field_instructor[] = $nid;
 
                     }
 
                     else {
 
                         // Create a shell account for this employee with the info we have
-                        list ($entity, $wrapper) = createEntity('employee');
+                        $wrapper2 = createEntity('employee');
 
                         $fullname = '';
 
                         if(isset($instructor['email']) && !empty($instructor['email'])){
-                            $wrapper->field_email->set($instructor['email']);
+                            $wrapper2->field_email->set($instructor['email']);
                         }
 
                         if(isset($instructor['first']) && !empty($instructor['first'])) {
-                            $wrapper->field_first_name->set($instructor['first']);
+                            $wrapper2->field_first_name->set($instructor['first']);
                             $fullname = $instructor['first'];
                         }
 
                         if(isset($instructor['middleInitial']) && !empty($instructor['middleInitial'])) {
-                            $wrapper->field_middle_name->set($instructor['middleInitial']);
+                            $wrapper2->field_middle_name->set($instructor['middleInitial']);
                             $fullname .= " ".$instructor['middleInitial'];
                         }
 
                         if(isset($instructor['last']) && !empty($instructor['last'])) {
-                            $wrapper->field_last_name->set($instructor['last']);
+                            $wrapper2->field_last_name->set($instructor['last']);
                             $fullname .= " ".$instructor['last'];
                         }
 
-                        $wrapper->title->set($fullname);
+                        $wrapper2->title->set($fullname);
 
-                        $entity->field_instructor[$entity->language] = array();
-                        $entity->field_instructor[$entity->language][$instructor_count]['target_id'] = $wrapper->getIdentifier();
-                        $instructor_count++;
+                        $wrapper->field_instructor = array();
+                        $wrapper->field_instructor[] = $wrapper2->getIdentifier();
+
                     }
 
                 }
@@ -604,7 +578,7 @@ function createEntity($type) {
     $entity = entity_create('node', $values);
     $wrapper = entity_metadata_wrapper('node', $entity);
 
-    return array($entity, $wrapper);
+    return $wrapper;
 }
 
 /*
