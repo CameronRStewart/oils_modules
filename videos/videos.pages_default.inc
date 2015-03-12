@@ -23,7 +23,7 @@ function videos_default_page_manager_handlers() {
     'no_blocks' => 0,
     'pipeline' => 'standard',
     'body_classes_to_remove' => '',
-    'body_classes_to_add' => 'video',
+    'body_classes_to_add' => 'video one-sidebar sidebar-first',
     'css_id' => '',
     'css' => '',
     'contexts' => array(),
@@ -130,7 +130,7 @@ function videos_default_page_manager_handlers() {
       'delta_reversed' => FALSE,
       'formatter_settings' => array(
         'file_view_mode' => 'media_large',
-        'preset' => 'default',
+        'preset' => 'youtube_nodeplayer',
       ),
       'context' => 'argument_entity_id:node_1',
       'override_title' => 0,
