@@ -124,13 +124,13 @@ function videos_default_page_manager_handlers() {
     $pane->access = array();
     $pane->configuration = array(
       'label' => 'hidden',
-      'formatter' => 'file_rendered',
+      'formatter' => 'mediafront_player',
       'delta_limit' => 0,
       'delta_offset' => '0',
       'delta_reversed' => FALSE,
       'formatter_settings' => array(
         'file_view_mode' => 'media_large',
-        'preset' => 'youtube_nodeplayer',
+        'preset' => 'default',
       ),
       'context' => 'argument_entity_id:node_1',
       'override_title' => 0,

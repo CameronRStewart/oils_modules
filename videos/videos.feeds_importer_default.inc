@@ -15,7 +15,7 @@ function videos_feeds_importer_default() {
   $feeds_importer->api_version = 1;
   $feeds_importer->id = 'youtube_video_importer';
   $feeds_importer->config = array(
-    'name' => 'YouTube Video Importer',
+    'name' => 'OILS YouTube Video Importer',
     'description' => 'Imports OILS videos from YouTube',
     'fetcher' => array(
       'plugin_key' => 'YouTubeFetcher',
@@ -24,8 +24,6 @@ function videos_feeds_importer_default() {
         'use_pubsubhubbub' => FALSE,
         'designated_hub' => '',
         'request_timeout' => NULL,
-        'auto_scheme' => 'http',
-        'accept_invalid_cert' => FALSE,
       ),
     ),
     'parser' => array(
@@ -139,7 +137,6 @@ function videos_feeds_importer_default() {
         'update_existing' => '2',
         'input_format' => 'plain_text',
         'authorize' => 1,
-        'update_non_existent' => 'skip',
         'skip_hash_check' => 0,
         'bundle' => 'video',
       ),

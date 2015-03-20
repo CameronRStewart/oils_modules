@@ -80,8 +80,12 @@ function videos_mediafront_default_presets() {
       'description' => 'A Default Preset',
       'player' => 'osmplayer',
       'connect' => array(
-        'iscontroller' => array(),
-        'isplaylist' => array(),
+        'iscontroller' => array(
+          0 => 0,
+        ),
+        'isplaylist' => array(
+          0 => 0,
+        ),
       ),
       'settings' => array(
         'debug' => 0,
@@ -103,12 +107,12 @@ function videos_mediafront_default_presets() {
         'autoNext' => 1,
         'shuffle' => 0,
         'loop' => 0,
-        'logo' => '/sites/all/modules/contrib/mediafront/players/osmplayer/player/logo.png',
+        'logo' => '',
         'swfplayer' => '/sites/all/modules/contrib/mediafront/players/osmplayer/player/minplayer/flash/minplayer.swf',
-        'link' => 'http://www.mediafront.org',
-        'width' => '100%',
-        'height' => '450px',
-        'template' => 'default',
+        'link' => '',
+        'width' => '',
+        'height' => '',
+        'template' => 'stretchy',
         'playlistOnly' => 0,
         'disablePlaylist' => 0,
         'controllerOnly' => 0,
@@ -121,7 +125,7 @@ function videos_mediafront_default_presets() {
         'showController' => 1,
         'prereel' => '',
         'postreel' => '',
-        'player_settings__active_tab' => 'edit-player-settings-playlist-settings',
+        'player_settings__active_tab' => 'edit-player-settings-presentation',
       ),
     ),
   );

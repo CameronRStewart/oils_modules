@@ -312,7 +312,7 @@ function videos_file_default_displays() {
   $file_display->weight = 0;
   $file_display->status = TRUE;
   $file_display->settings = array(
-    'width' => '1000',
+    'width' => '960',
     'height' => '563',
     'theme' => 'dark',
     'color' => 'red',
