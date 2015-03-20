@@ -26,12 +26,6 @@ function oils_content_context_default_contexts() {
   $context->reactions = array(
     'block' => array(
       'blocks' => array(
-        'block-25' => array(
-          'module' => 'block',
-          'delta' => '25',
-          'region' => 'sidebar_second',
-          'weight' => '-10',
-        ),
         'menu_block-5' => array(
           'module' => 'menu_block',
           'delta' => '5',
@@ -58,20 +52,39 @@ function oils_content_context_default_contexts() {
   $context->conditions = array(
     'menu' => array(
       'values' => array(
-        'node/54' => 'node/54',
+        'node/72' => 'node/72',
       ),
     ),
   );
   $context->reactions = array(
     'block' => array(
       'blocks' => array(
+        'menu_block-8' => array(
+          'module' => 'menu_block',
+          'delta' => '8',
+          'region' => 'sidebar_first',
+          'weight' => 0,
+        ),
+        'menu_block-6' => array(
+          'module' => 'menu_block',
+          'delta' => '6',
+          'region' => 'sidebar_first',
+          'weight' => 1,
+        ),
         'views-contact_info-block_1' => array(
           'module' => 'views',
           'delta' => 'contact_info-block_1',
-          'region' => 'sidebar_second',
-          'weight' => '10',
+          'region' => 'sidebar_first',
+          'weight' => 2,
         ),
       ),
+    ),
+    'theme' => array(
+      'title' => '',
+      'subtitle' => '',
+    ),
+    'theme_html' => array(
+      'class' => '',
     ),
   );
   $context->condition_mode = 1;
@@ -111,15 +124,22 @@ function oils_content_context_default_contexts() {
           'module' => 'block',
           'delta' => '19',
           'region' => 'content',
-          'weight' => '-10',
+          'weight' => 0,
         ),
         'block-20' => array(
           'module' => 'block',
           'delta' => '20',
           'region' => 'content',
-          'weight' => '-9',
+          'weight' => 1,
         ),
       ),
+    ),
+    'theme' => array(
+      'title' => '',
+      'subtitle' => '',
+    ),
+    'theme_html' => array(
+      'class' => '',
     ),
   );
   $context->condition_mode = 1;
@@ -178,7 +198,7 @@ function oils_content_context_default_contexts() {
         'menu_block-4' => array(
           'module' => 'menu_block',
           'delta' => '4',
-          'region' => 'sidebar_second',
+          'region' => 'sidebar_first',
           'weight' => '-10',
         ),
       ),
@@ -196,8 +216,8 @@ function oils_content_context_default_contexts() {
   $context->disabled = FALSE; /* Edit this to true to make a default context disabled initially */
   $context->api_version = 3;
   $context->name = 'ps_bachelor_program_blocks';
-  $context->description = 'Place blocks on the bachelor\'s program pages in prospective students.';
-  $context->tag = 'prospective-students';
+  $context->description = 'Place blocks on the bachelor\'s program pages in academic programs section.';
+  $context->tag = 'academic-programs';
   $context->conditions = array(
     'menu' => array(
       'values' => array(
@@ -208,21 +228,40 @@ function oils_content_context_default_contexts() {
   $context->reactions = array(
     'block' => array(
       'blocks' => array(
+        'menu_block-9' => array(
+          'module' => 'menu_block',
+          'delta' => '9',
+          'region' => 'sidebar_first',
+          'weight' => '-10',
+        ),
+        'views-contact_info-block' => array(
+          'module' => 'views',
+          'delta' => 'contact_info-block',
+          'region' => 'sidebar_second',
+          'weight' => '0',
+        ),
         'block-1' => array(
           'module' => 'block',
           'delta' => '1',
           'region' => 'sidebar_second',
-          'weight' => '-10',
+          'weight' => '1',
         ),
       ),
+    ),
+    'theme' => array(
+      'title' => '',
+      'subtitle' => '',
+    ),
+    'theme_html' => array(
+      'class' => '',
     ),
   );
   $context->condition_mode = 1;
 
   // Translatables
   // Included for use with string extractors like potx.
-  t('Place blocks on the bachelor\'s program pages in prospective students.');
-  t('prospective-students');
+  t('Place blocks on the bachelor\'s program pages in academic programs section.');
+  t('academic-programs');
   $export['ps_bachelor_program_blocks'] = $context;
 
   $context = new stdClass();
@@ -236,6 +275,8 @@ function oils_content_context_default_contexts() {
       'values' => array(
         'prospective-students/bachelors-program' => 'prospective-students/bachelors-program',
         '~prospective-students/bachelors-program/*' => '~prospective-students/bachelors-program/*',
+        'prospective-students/bachelor-science' => 'prospective-students/bachelor-science',
+        '~prospective-students/bachelor-science/*' => '~prospective-students/bachelor-science/*',
       ),
     ),
   );
@@ -246,12 +287,16 @@ function oils_content_context_default_contexts() {
           'module' => 'block',
           'delta' => '14',
           'region' => 'highlighted',
-          'weight' => '-10',
+          'weight' => 0,
         ),
       ),
     ),
     'theme_html' => array(
       'class' => 'program-home-page',
+    ),
+    'theme' => array(
+      'title' => '',
+      'subtitle' => '',
     ),
   );
   $context->condition_mode = 1;
@@ -282,15 +327,22 @@ function oils_content_context_default_contexts() {
           'module' => 'views',
           'delta' => 'contact_info-block_1',
           'region' => 'sidebar_second',
-          'weight' => '10',
+          'weight' => 0,
         ),
         'block-21' => array(
           'module' => 'block',
           'delta' => '21',
           'region' => 'sidebar_second',
-          'weight' => '-10',
+          'weight' => 1,
         ),
       ),
+    ),
+    'theme' => array(
+      'title' => '',
+      'subtitle' => '',
+    ),
+    'theme_html' => array(
+      'class' => '',
     ),
   );
   $context->condition_mode = 1;
@@ -318,16 +370,20 @@ function oils_content_context_default_contexts() {
   $context->reactions = array(
     'block' => array(
       'blocks' => array(
-        'block-17' => array(
+        'block-27' => array(
           'module' => 'block',
-          'delta' => '17',
+          'delta' => '27',
           'region' => 'highlighted',
-          'weight' => '-10',
+          'weight' => 0,
         ),
       ),
     ),
     'theme_html' => array(
       'class' => 'program-home-page',
+    ),
+    'theme' => array(
+      'title' => '',
+      'subtitle' => '',
     ),
   );
   $context->condition_mode = 1;
@@ -354,19 +410,26 @@ function oils_content_context_default_contexts() {
   $context->reactions = array(
     'block' => array(
       'blocks' => array(
-        'block-18' => array(
-          'module' => 'block',
-          'delta' => '18',
-          'region' => 'sidebar_second',
-          'weight' => '-10',
-        ),
         'views-contact_info-block_3' => array(
           'module' => 'views',
           'delta' => 'contact_info-block_3',
           'region' => 'sidebar_second',
-          'weight' => '10',
+          'weight' => 0,
+        ),
+        'block-18' => array(
+          'module' => 'block',
+          'delta' => '18',
+          'region' => 'sidebar_second',
+          'weight' => 1,
         ),
       ),
+    ),
+    'theme' => array(
+      'title' => '',
+      'subtitle' => '',
+    ),
+    'theme_html' => array(
+      'class' => '',
     ),
   );
   $context->condition_mode = 1;
@@ -394,16 +457,20 @@ function oils_content_context_default_contexts() {
   $context->reactions = array(
     'block' => array(
       'blocks' => array(
-        'block-17' => array(
+        'block-26' => array(
           'module' => 'block',
-          'delta' => '17',
+          'delta' => '26',
           'region' => 'highlighted',
-          'weight' => '-10',
+          'weight' => 0,
         ),
       ),
     ),
     'theme_html' => array(
       'class' => 'program-home-page',
+    ),
+    'theme' => array(
+      'title' => '',
+      'subtitle' => '',
     ),
   );
   $context->condition_mode = 1;
@@ -418,8 +485,8 @@ function oils_content_context_default_contexts() {
   $context->disabled = FALSE; /* Edit this to true to make a default context disabled initially */
   $context->api_version = 3;
   $context->name = 'ps_masters_program_blocks';
-  $context->description = 'Place blocks on the masters program pages in prospective students.';
-  $context->tag = 'prospective-students';
+  $context->description = 'Place blocks on the masters program pages in the academic programs section.';
+  $context->tag = 'academic-programs';
   $context->conditions = array(
     'menu' => array(
       'values' => array(
@@ -430,21 +497,40 @@ function oils_content_context_default_contexts() {
   $context->reactions = array(
     'block' => array(
       'blocks' => array(
+        'menu_block-10' => array(
+          'module' => 'menu_block',
+          'delta' => '10',
+          'region' => 'sidebar_first',
+          'weight' => '-10',
+        ),
+        'views-contact_info-block' => array(
+          'module' => 'views',
+          'delta' => 'contact_info-block',
+          'region' => 'sidebar_second',
+          'weight' => '0',
+        ),
         'block-12' => array(
           'module' => 'block',
           'delta' => '12',
           'region' => 'sidebar_second',
-          'weight' => '-10',
+          'weight' => '1',
         ),
       ),
+    ),
+    'theme' => array(
+      'title' => '',
+      'subtitle' => '',
+    ),
+    'theme_html' => array(
+      'class' => '',
     ),
   );
   $context->condition_mode = 1;
 
   // Translatables
   // Included for use with string extractors like potx.
-  t('Place blocks on the masters program pages in prospective students.');
-  t('prospective-students');
+  t('Place blocks on the masters program pages in the academic programs section.');
+  t('academic-programs');
   $export['ps_masters_program_blocks'] = $context;
 
   $context = new stdClass();
@@ -468,12 +554,16 @@ function oils_content_context_default_contexts() {
           'module' => 'block',
           'delta' => '4',
           'region' => 'highlighted',
-          'weight' => '-10',
+          'weight' => 0,
         ),
       ),
     ),
     'theme_html' => array(
       'class' => 'program-home-page',
+    ),
+    'theme' => array(
+      'title' => '',
+      'subtitle' => '',
     ),
   );
   $context->condition_mode = 1;
@@ -571,10 +661,17 @@ function oils_content_context_default_contexts() {
         'menu_block-3' => array(
           'module' => 'menu_block',
           'delta' => '3',
-          'region' => 'sidebar_second',
-          'weight' => '0',
+          'region' => 'sidebar_first',
+          'weight' => 0,
         ),
       ),
+    ),
+    'theme' => array(
+      'title' => '',
+      'subtitle' => '',
+    ),
+    'theme_html' => array(
+      'class' => '',
     ),
   );
   $context->condition_mode = 0;
