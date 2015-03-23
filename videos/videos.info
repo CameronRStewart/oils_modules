@@ -12,6 +12,7 @@ dependencies[] = feeds_xpathparser
 dependencies[] = feeds_youtube_fetcher
 dependencies[] = file
 dependencies[] = file_entity
+dependencies[] = fitvids
 dependencies[] = image
 dependencies[] = media
 dependencies[] = media_feeds
