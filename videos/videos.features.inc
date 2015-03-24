@@ -139,8 +139,8 @@ function videos_mediafront_views_default_options() {
   $options = array(
     'oils_videos' => array(
       'field_media_file' => array(
-        'link_to_player' => 1,
-        'field_type' => 'media',
+        'link_to_player' => 0,
+        'field_type' => 0,
         'media_type' => 'media',
         'preview' => 0,
         'thumbnail' => 0,
@@ -171,6 +171,14 @@ function videos_mediafront_views_default_options() {
         'custom' => '',
       ),
       'title' => array(
+        'link_to_player' => 0,
+        'field_type' => 0,
+        'media_type' => 'media',
+        'preview' => 0,
+        'thumbnail' => 0,
+        'custom' => '',
+      ),
+      'body' => array(
         'link_to_player' => 0,
         'field_type' => 0,
         'media_type' => 'media',

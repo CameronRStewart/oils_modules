@@ -63,6 +63,34 @@ function videos_default_page_manager_handlers() {
   $display->content = array();
   $display->panels = array();
     $pane = new stdClass();
+    $pane->pid = 'new-aa3d9cb7-8800-4e36-9d4d-442db0eeb159';
+    $pane->panel = 'left';
+    $pane->type = 'node_title';
+    $pane->subtype = 'node_title';
+    $pane->shown = TRUE;
+    $pane->access = array();
+    $pane->configuration = array(
+      'link' => 0,
+      'markup' => 'h1',
+      'id' => '',
+      'class' => '',
+      'context' => 'argument_entity_id:node_1',
+      'override_title' => 1,
+      'override_title_text' => '',
+      'override_title_heading' => 'span',
+    );
+    $pane->cache = array();
+    $pane->style = array(
+      'settings' => NULL,
+    );
+    $pane->css = array();
+    $pane->extras = array();
+    $pane->position = 0;
+    $pane->locks = array();
+    $pane->uuid = 'aa3d9cb7-8800-4e36-9d4d-442db0eeb159';
+    $display->content['new-aa3d9cb7-8800-4e36-9d4d-442db0eeb159'] = $pane;
+    $display->panels['left'][0] = 'new-aa3d9cb7-8800-4e36-9d4d-442db0eeb159';
+    $pane = new stdClass();
     $pane->pid = 'new-0b19b29f-1106-40a5-9ff0-eee001135e85';
     $pane->panel = 'left';
     $pane->type = 'entity_field';
@@ -87,11 +115,11 @@ function videos_default_page_manager_handlers() {
     );
     $pane->css = array();
     $pane->extras = array();
-    $pane->position = 0;
+    $pane->position = 1;
     $pane->locks = array();
     $pane->uuid = '0b19b29f-1106-40a5-9ff0-eee001135e85';
     $display->content['new-0b19b29f-1106-40a5-9ff0-eee001135e85'] = $pane;
-    $display->panels['left'][0] = 'new-0b19b29f-1106-40a5-9ff0-eee001135e85';
+    $display->panels['left'][1] = 'new-0b19b29f-1106-40a5-9ff0-eee001135e85';
     $pane = new stdClass();
     $pane->pid = 'new-3d9c80dc-6c3d-4a84-afe7-2006cf510bbd';
     $pane->panel = 'right';
@@ -160,7 +188,7 @@ function videos_default_page_manager_handlers() {
     $pane->uuid = '68d72751-4a5d-4ab7-b447-300cd59871d8';
     $display->content['new-68d72751-4a5d-4ab7-b447-300cd59871d8'] = $pane;
     $display->panels['top'][0] = 'new-68d72751-4a5d-4ab7-b447-300cd59871d8';
-  $display->hide_title = PANELS_TITLE_FIXED;
+  $display->hide_title = PANELS_TITLE_NONE;
   $display->title_pane = 'new-68d72751-4a5d-4ab7-b447-300cd59871d8';
   $handler->conf['display'] = $display;
   $export['node_view__video'] = $handler;
