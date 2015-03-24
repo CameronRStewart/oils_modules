@@ -455,7 +455,9 @@ function videos_file_default_displays() {
   $file_display->name = 'video__media_small__file_field_file_rendered';
   $file_display->weight = 0;
   $file_display->status = FALSE;
-  $file_display->settings = '';
+  $file_display->settings = array(
+    'file_view_mode' => 'default',
+  );
   $export['video__media_small__file_field_file_rendered'] = $file_display;
 
   $file_display = new stdClass();
@@ -487,7 +489,9 @@ function videos_file_default_displays() {
   $file_display->name = 'video__media_small__file_field_mediafront_player';
   $file_display->weight = 0;
   $file_display->status = FALSE;
-  $file_display->settings = '';
+  $file_display->settings = array(
+    'preset' => 'default',
+  );
   $export['video__media_small__file_field_mediafront_player'] = $file_display;
 
   $file_display = new stdClass();
@@ -506,7 +510,7 @@ function videos_file_default_displays() {
   $file_display->weight = 0;
   $file_display->status = TRUE;
   $file_display->settings = array(
-    'image_style' => 'video_thumbnail_220',
+    'image_style' => 'video_thumbnail_340',
   );
   $export['video__media_small__media_youtube_image'] = $file_display;
 
@@ -521,6 +525,7 @@ function videos_file_default_displays() {
     'theme' => 'dark',
     'color' => 'red',
     'autohide' => '2',
+    'captions' => FALSE,
     'autoplay' => 0,
     'loop' => 0,
     'showinfo' => 1,

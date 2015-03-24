@@ -102,6 +102,7 @@ features[file_display][] = video__preview__media_youtube_image
 features[file_display][] = video__teaser__media_youtube_video
 features[image][] = video_thumbnail_140
 features[image][] = video_thumbnail_220
+features[image][] = video_thumbnail_340
 features[mediafront][] = default
 features[mediafront_views][] = oils_videos
 features[node][] = video

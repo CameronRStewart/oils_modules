@@ -67,6 +67,22 @@ function videos_image_default_styles() {
     ),
   );
 
+  // Exported image style: video_thumbnail_340.
+  $styles['video_thumbnail_340'] = array(
+    'label' => 'Video Thumbnail 340',
+    'effects' => array(
+      1 => array(
+        'name' => 'image_scale',
+        'data' => array(
+          'width' => 340,
+          'height' => '',
+          'upscale' => 1,
+        ),
+        'weight' => 1,
+      ),
+    ),
+  );
+
   return $styles;
 }
 
@@ -139,8 +155,8 @@ function videos_mediafront_views_default_options() {
   $options = array(
     'oils_videos' => array(
       'field_media_file' => array(
-        'link_to_player' => 0,
-        'field_type' => 0,
+        'link_to_player' => 1,
+        'field_type' => 'media',
         'media_type' => 'media',
         'preview' => 0,
         'thumbnail' => 0,

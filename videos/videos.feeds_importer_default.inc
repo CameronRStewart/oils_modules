@@ -141,11 +141,11 @@ function videos_feeds_importer_default() {
         'bundle' => 'video',
       ),
     ),
-    'content_type' => '',
+    'content_type' => 'youtube_channel',
     'update' => 0,
     'import_period' => '-1',
     'expire_period' => 3600,
-    'import_on_create' => 1,
+    'import_on_create' => 0,
     'process_in_background' => 0,
   );
   $export['youtube_video_importer'] = $feeds_importer;
