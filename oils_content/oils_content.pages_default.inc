@@ -710,10 +710,10 @@ function oils_content_default_page_manager_pages() {
     $display->content['new-15446d38-ffa9-424b-98c5-509d314d30ff'] = $pane;
     $display->panels['left'][0] = 'new-15446d38-ffa9-424b-98c5-509d314d30ff';
     $pane = new stdClass();
-    $pane->pid = 'new-7e7c9422-28a4-49b9-b027-fd674d5f92e1';
+    $pane->pid = 'new-6c3311c8-c1b4-4742-a4d6-d05fd752880a';
     $pane->panel = 'middle';
     $pane->type = 'block';
-    $pane->subtype = 'views-oils_videos-block';
+    $pane->subtype = 'views-oils_videos-block_1';
     $pane->shown = TRUE;
     $pane->access = array();
     $pane->configuration = array(
@@ -729,9 +729,9 @@ function oils_content_default_page_manager_pages() {
     $pane->extras = array();
     $pane->position = 0;
     $pane->locks = array();
-    $pane->uuid = '7e7c9422-28a4-49b9-b027-fd674d5f92e1';
-    $display->content['new-7e7c9422-28a4-49b9-b027-fd674d5f92e1'] = $pane;
-    $display->panels['middle'][0] = 'new-7e7c9422-28a4-49b9-b027-fd674d5f92e1';
+    $pane->uuid = '6c3311c8-c1b4-4742-a4d6-d05fd752880a';
+    $display->content['new-6c3311c8-c1b4-4742-a4d6-d05fd752880a'] = $pane;
+    $display->panels['middle'][0] = 'new-6c3311c8-c1b4-4742-a4d6-d05fd752880a';
     $pane = new stdClass();
     $pane->pid = 'new-dc5797f6-2af6-4e5d-beee-721ddcf0e38d';
     $pane->panel = 'right';
