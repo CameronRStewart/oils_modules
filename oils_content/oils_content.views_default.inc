@@ -474,7 +474,7 @@ function oils_content_views_default_views() {
   $handler->display->display_options['footer']['area']['id'] = 'area';
   $handler->display->display_options['footer']['area']['table'] = 'views';
   $handler->display->display_options['footer']['area']['field'] = 'area';
-  $handler->display->display_options['footer']['area']['content'] = '<p><a href="/faculty-research">All OI&LS Faculty</a></p>';
+  $handler->display->display_options['footer']['area']['content'] = '<p><a href="/faculty-research">All OILS Faculty</a></p>';
   $handler->display->display_options['footer']['area']['format'] = 'full_html';
   $handler->display->display_options['defaults']['fields'] = FALSE;
   /* Field: Content: Nid */
