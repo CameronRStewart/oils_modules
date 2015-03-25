@@ -1655,3 +1655,35 @@ function staffdb_user_login(&$edit, $account) {
 function staffdb_cron() {
   start_import_update_employees();
 }
+
+
+/**
+ * Implements hook_form_alter().
+ */
+
+function staffdb_form_alter(&$form, &$form_state, $form_id) {
+  if (isset($form['#node']) && $form_id == $form['#node']->type .'_node_form') {
+    $form['#after_build'][] = 'staffdb_after_build';
+  }
+}
+
+
+function staffdb_after_build($form, &$form_state) {
+//  dpm($form);
+  $field1 = 'field_remote_id';
+  $form[$field1]['und'][0]['value']['#attributes']['readonly'] = 'readonly';
+  $form_state['values'][$field1]['und'][0]['value'] = $form[$field1]['und'][0]['value']['#default_value'];
+  $field2 = 'field_email';
+  $form[$field2]['und'][0]['value']['#attributes']['readonly'] = 'readonly';
+  $form_state['values'][$field2]['und'][0]['value'] = $form[$field2]['und'][0]['value']['#default_value'];
+  $field3 = 'field_picture';
+  $form[$field3]['und'][0]['value']['#attributes']['readonly'] = 'readonly';
+  $form_state['values'][$field3]['und'][0]['value'] = $form[$field3]['und'][0]['value']['#default_value'];
+
+
+  $form['field_classes']['und']['#attributes'] = array('onkeypress' => 'return false;');
+  $form['field_department']['und']['#attributes'] = array('onkeypress' => 'return false;');
+  $form['field_dean_s_cabinet_member']['und']['#attributes'] = array('onkeypress' => 'return false;', 'onclick' => 'return false;');
+  $form['field_visible']['und']['#attributes'] = array('onkeypress' => 'return false;', 'onclick' => 'return false;');
+  return $form;
+}
