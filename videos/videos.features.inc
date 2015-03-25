@@ -202,6 +202,30 @@ function videos_mediafront_views_default_options() {
         'thumbnail' => 0,
         'custom' => '',
       ),
+      'random' => array(
+        'link_to_player' => 0,
+        'field_type' => 0,
+        'media_type' => 'media',
+        'preview' => 0,
+        'thumbnail' => 0,
+        'custom' => '',
+      ),
+      'view' => array(
+        'link_to_player' => 0,
+        'field_type' => 0,
+        'media_type' => 'media',
+        'preview' => 0,
+        'thumbnail' => 0,
+        'custom' => '',
+      ),
+      'field_featured_video_value' => array(
+        'link_to_player' => 0,
+        'field_type' => 0,
+        'media_type' => 'media',
+        'preview' => 0,
+        'thumbnail' => 0,
+        'custom' => '',
+      ),
     ),
   );
   return $options;

@@ -54,6 +54,56 @@ function videos_field_default_field_instances() {
     ),
   );
 
+  // Exported field_instance: 'node-video-field_featured_video'
+  $field_instances['node-video-field_featured_video'] = array(
+    'bundle' => 'video',
+    'default_value' => array(
+      0 => array(
+        'value' => 0,
+      ),
+    ),
+    'deleted' => 0,
+    'description' => 'Select if this video should be featured on the home page.',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'list',
+        'settings' => array(),
+        'type' => 'list_default',
+        'weight' => 7,
+      ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+    ),
+    'entity_type' => 'node',
+    'field_name' => 'field_featured_video',
+    'label' => 'Featured Video',
+    'required' => 0,
+    'settings' => array(
+      'mediafront' => array(
+        'custom' => '',
+        'field_type' => 0,
+        'media_type' => 'media',
+        'preview' => 0,
+        'thumbnail' => 0,
+      ),
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'options',
+      'settings' => array(
+        'display_label' => 1,
+      ),
+      'type' => 'options_onoff',
+      'weight' => 43,
+    ),
+  );
+
   // Exported field_instance: 'node-video-field_media_file'
   $field_instances['node-video-field_media_file'] = array(
     'bundle' => 'video',
@@ -410,9 +460,11 @@ function videos_field_default_field_instances() {
   t('Body');
   t('Category');
   t('Copy and paste the video URL from the Share tab on YouTube.');
+  t('Featured Video');
   t('Keywords');
   t('Media File');
   t('Poster');
+  t('Select if this video should be featured on the home page.');
   t('Thumbnail');
   t('YouTube URL');
 

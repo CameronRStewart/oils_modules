@@ -193,5 +193,93 @@ function videos_default_page_manager_handlers() {
   $handler->conf['display'] = $display;
   $export['node_view__video'] = $handler;
 
+  $handler = new stdClass();
+  $handler->disabled = FALSE; /* Edit this to true to make a default handler disabled initially */
+  $handler->api_version = 1;
+  $handler->name = 'node_view__youtube_channel';
+  $handler->task = 'node_view';
+  $handler->subtask = '';
+  $handler->handler = 'panel_context';
+  $handler->weight = 7;
+  $handler->conf = array(
+    'title' => 'YouTube Channel',
+    'no_blocks' => 0,
+    'pipeline' => 'standard',
+    'body_classes_to_remove' => '',
+    'body_classes_to_add' => '',
+    'css_id' => '',
+    'css' => '',
+    'contexts' => array(),
+    'relationships' => array(),
+    'name' => 'youtube_channel',
+    'access' => array(
+      'plugins' => array(
+        0 => array(
+          'name' => 'node_type',
+          'settings' => array(
+            'type' => array(
+              'youtube_channel' => 'youtube_channel',
+            ),
+          ),
+          'context' => 'argument_entity_id:node_1',
+          'not' => FALSE,
+        ),
+      ),
+      'logic' => 'and',
+    ),
+  );
+  $display = new panels_display();
+  $display->layout = 'threecol_33_34_33_stacked';
+  $display->layout_settings = array();
+  $display->panel_settings = array(
+    'style_settings' => array(
+      'default' => NULL,
+      'top' => NULL,
+      'left' => NULL,
+      'middle' => NULL,
+      'right' => NULL,
+      'bottom' => NULL,
+    ),
+  );
+  $display->cache = array();
+  $display->title = '';
+  $display->uuid = 'bc167db5-05e2-49dd-a1cc-b9ef7ee5ad16';
+  $display->content = array();
+  $display->panels = array();
+    $pane = new stdClass();
+    $pane->pid = 'new-8cee9150-1ff3-421f-b75b-edd65ecb5ee2';
+    $pane->panel = 'top';
+    $pane->type = 'entity_field';
+    $pane->subtype = 'node:body';
+    $pane->shown = TRUE;
+    $pane->access = array();
+    $pane->configuration = array(
+      'label' => 'title',
+      'formatter' => 'text_default',
+      'delta_limit' => 0,
+      'delta_offset' => '0',
+      'delta_reversed' => FALSE,
+      'formatter_settings' => array(),
+      'context' => 'argument_entity_id:node_1',
+      'override_title' => 1,
+      'override_title_text' => '',
+      'override_title_heading' => 'span',
+    );
+    $pane->cache = array();
+    $pane->style = array(
+      'settings' => NULL,
+    );
+    $pane->css = array();
+    $pane->extras = array();
+    $pane->position = 0;
+    $pane->locks = array();
+    $pane->uuid = '8cee9150-1ff3-421f-b75b-edd65ecb5ee2';
+    $display->content['new-8cee9150-1ff3-421f-b75b-edd65ecb5ee2'] = $pane;
+    $display->panels['top'][0] = 'new-8cee9150-1ff3-421f-b75b-edd65ecb5ee2';
+  $display->hide_title = PANELS_TITLE_FIXED;
+  $display->title_pane = 'new-8cee9150-1ff3-421f-b75b-edd65ecb5ee2';
+  $handler->conf['display'] = $display;
+  $export['node_view__youtube_channel'] = $handler;
+
   return $export;
 }
