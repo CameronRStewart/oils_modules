@@ -486,6 +486,7 @@ function buildCourseInfoEntities($data, $type, $entity_nid_list) {
                     $instructors[0] = $data['instructors']['instructor'];
                 }
 
+                $instructor_nids = array();
                 foreach ($instructors as $instructor) {
                     // Look up Employee table
                     $query = new EntityFieldQuery();
@@ -506,11 +507,7 @@ function buildCourseInfoEntities($data, $type, $entity_nid_list) {
                             drupal_set_message(t('There seem to be two Employee nodes with the email address @email.  Selecting only the first.', array('@email' => $$instructor['name'])));
                         }
 
-                        $nid = $nids[0];
-
-                        $wrapper->field_instructor = array();
-                        $wrapper->field_instructor[] = $nid;
-
+                        $instructor_nids[] = $nids[0];
                     }
 
                     else {
@@ -541,12 +538,11 @@ function buildCourseInfoEntities($data, $type, $entity_nid_list) {
 
                         $wrapper2->title->set($fullname);
 
-                        $wrapper->field_instructor = array();
-                        $wrapper->field_instructor[] = $wrapper2->getIdentifier();
+                        $instructor_nids[] = $wrapper2->getIdentifier();
 
                     }
-
                 }
+                $wrapper->field_instructor->set($instructor_nids);
             }
 
 
