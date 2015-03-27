@@ -831,6 +831,7 @@ function course_info_content_types_field_default_field_instances() {
   $field_instances['node-section-field_instructor'] = array(
     'bundle' => 'section',
     'default_value' => NULL,
+    'default_value_function' => '',
     'deleted' => 0,
     'description' => '',
     'display' => array(
@@ -853,8 +854,20 @@ function course_info_content_types_field_default_field_instances() {
     'entity_type' => 'node',
     'field_name' => 'field_instructor',
     'label' => 'Instructor',
-    'required' => 1,
+    'required' => 0,
     'settings' => array(
+      'behaviors' => array(
+        'prepopulate' => array(
+          'status' => 0,
+        ),
+      ),
+      'mediafront' => array(
+        'custom' => '',
+        'field_type' => 0,
+        'media_type' => 'media',
+        'preview' => 0,
+        'thumbnail' => 0,
+      ),
       'user_register_form' => FALSE,
     ),
     'widget' => array(
@@ -894,12 +907,19 @@ function course_info_content_types_field_default_field_instances() {
     'entity_type' => 'node',
     'field_name' => 'field_meeting_days',
     'label' => 'Meeting Days',
-    'required' => 1,
+    'required' => 0,
     'settings' => array(
       'linkit' => array(
         'button_text' => 'Search',
         'enable' => 0,
         'profile' => '',
+      ),
+      'mediafront' => array(
+        'custom' => '',
+        'field_type' => 0,
+        'media_type' => 'media',
+        'preview' => 0,
+        'thumbnail' => 0,
       ),
       'text_processing' => 0,
       'user_register_form' => FALSE,
@@ -984,12 +1004,19 @@ function course_info_content_types_field_default_field_instances() {
     'entity_type' => 'node',
     'field_name' => 'field_number',
     'label' => 'Number',
-    'required' => 1,
+    'required' => 0,
     'settings' => array(
       'linkit' => array(
         'button_text' => 'Search',
         'enable' => 0,
         'profile' => '',
+      ),
+      'mediafront' => array(
+        'custom' => '',
+        'field_type' => 0,
+        'media_type' => 'media',
+        'preview' => 0,
+        'thumbnail' => 0,
       ),
       'text_processing' => 0,
       'user_register_form' => FALSE,
@@ -1029,12 +1056,19 @@ function course_info_content_types_field_default_field_instances() {
     'entity_type' => 'node',
     'field_name' => 'field_part_of_term',
     'label' => 'Part of Term',
-    'required' => 1,
+    'required' => 0,
     'settings' => array(
       'linkit' => array(
         'button_text' => 'Search',
         'enable' => 0,
         'profile' => '',
+      ),
+      'mediafront' => array(
+        'custom' => '',
+        'field_type' => 0,
+        'media_type' => 'media',
+        'preview' => 0,
+        'thumbnail' => 0,
       ),
       'text_processing' => 0,
       'user_register_form' => FALSE,
@@ -1164,12 +1198,19 @@ function course_info_content_types_field_default_field_instances() {
     'entity_type' => 'node',
     'field_name' => 'field_status',
     'label' => 'Status',
-    'required' => 1,
+    'required' => 0,
     'settings' => array(
       'linkit' => array(
         'button_text' => 'Search',
         'enable' => 0,
         'profile' => '',
+      ),
+      'mediafront' => array(
+        'custom' => '',
+        'field_type' => 0,
+        'media_type' => 'media',
+        'preview' => 0,
+        'thumbnail' => 0,
       ),
       'text_processing' => 0,
       'user_register_form' => FALSE,

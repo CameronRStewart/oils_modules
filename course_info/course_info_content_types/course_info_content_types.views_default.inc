@@ -337,10 +337,6 @@ function course_info_content_types_views_default_views() {
   $handler->display->display_options['fields']['field_instructor']['id'] = 'field_instructor';
   $handler->display->display_options['fields']['field_instructor']['table'] = 'field_data_field_instructor';
   $handler->display->display_options['fields']['field_instructor']['field'] = 'field_instructor';
-  $handler->display->display_options['fields']['field_instructor']['settings'] = array(
-    'link' => 1,
-  );
-  $handler->display->display_options['fields']['field_instructor']['delta_offset'] = '0';
   /* Field: Content: Start Date */
   $handler->display->display_options['fields']['field_date_range']['id'] = 'field_date_range';
   $handler->display->display_options['fields']['field_date_range']['table'] = 'field_data_field_date_range';
