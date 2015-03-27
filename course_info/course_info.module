@@ -618,7 +618,7 @@ function buildCourseInfoEntities($data, $type, $entity_nid_list) {
             }
 
             $wrapper2->title->set($fullname);
-
+            $wrapper2->save();
             $instructor_nids[] = $wrapper2->getIdentifier();
 
           }
