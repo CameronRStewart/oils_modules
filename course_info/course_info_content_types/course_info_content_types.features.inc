@@ -8,6 +8,9 @@
  * Implements hook_ctools_plugin_api().
  */
 function course_info_content_types_ctools_plugin_api($module = NULL, $api = NULL) {
+  if ($module == "page_manager" && $api == "pages_default") {
+    return array("version" => "1");
+  }
   if ($module == "strongarm" && $api == "strongarm") {
     return array("version" => "1");
   }
@@ -18,6 +21,33 @@ function course_info_content_types_ctools_plugin_api($module = NULL, $api = NULL
  */
 function course_info_content_types_views_api($module = NULL, $api = NULL) {
   return array("api" => "3.0");
+}
+
+/**
+ * Implements hook_mediafront_views_default_options().
+ */
+function course_info_content_types_mediafront_views_default_options() {
+  $options = array(
+    'course_sections' => array(
+      'title' => array(
+        'link_to_player' => 0,
+        'field_type' => 0,
+        'media_type' => 'media',
+        'preview' => 0,
+        'thumbnail' => 0,
+        'custom' => '',
+      ),
+      'field_instructor' => array(
+        'link_to_player' => 0,
+        'field_type' => 0,
+        'media_type' => 'media',
+        'preview' => 0,
+        'thumbnail' => 0,
+        'custom' => '',
+      ),
+    ),
+  );
+  return $options;
 }
 
 /**
