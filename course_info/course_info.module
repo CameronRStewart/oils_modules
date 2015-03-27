@@ -531,7 +531,7 @@ function buildCourseInfoEntities($data, $type, $entity_nid_list) {
         $wrapper->field_waitlist->set($data["waitlist"]['$']);
       }
       else {
-        $wrapper->field_waitlist->set(NULL);
+        $wrapper->field_waitlist->set('0');
       }
 
       //field_waitlist_max
@@ -547,7 +547,7 @@ function buildCourseInfoEntities($data, $type, $entity_nid_list) {
         $wrapper->field_enrollment->set($data["enrollment"]['$']);
       }
       else {
-        $wrapper->field_enrollment->set(NULL);
+        $wrapper->field_enrollment->set('0');
       }
 
       //field_enrollment_max
