@@ -624,6 +624,8 @@ function buildCourseInfoEntities($data, $type, $entity_nid_list) {
           }
         }
         $wrapper->field_instructor->set($instructor_nids);
+      } else {
+        $wrapper->field_instructor->set(NULL);
       }
 
       $wrapper->save();
