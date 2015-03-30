@@ -248,19 +248,13 @@ function context_settings_context_default_contexts() {
           'module' => 'menu_block',
           'delta' => '13',
           'region' => 'sidebar_first',
-          'weight' => '-10',
+          'weight' => 0,
         ),
         'menu_block-6' => array(
           'module' => 'menu_block',
           'delta' => '6',
           'region' => 'sidebar_first',
-          'weight' => '-9',
-        ),
-        'block-41' => array(
-          'module' => 'block',
-          'delta' => '41',
-          'region' => 'sidebar_second',
-          'weight' => '0',
+          'weight' => 1,
         ),
       ),
     ),
@@ -387,6 +381,42 @@ function context_settings_context_default_contexts() {
   $context = new stdClass();
   $context->disabled = FALSE; /* Edit this to true to make a default context disabled initially */
   $context->api_version = 3;
+  $context->name = 'faculty_research';
+  $context->description = 'Faculty and Research section';
+  $context->tag = 'special';
+  $context->conditions = array(
+    'menu' => array(
+      'values' => array(
+        'node/4' => 'node/4',
+      ),
+    ),
+  );
+  $context->reactions = array(
+    'block' => array(
+      'blocks' => array(
+        'block-43' => array(
+          'module' => 'block',
+          'delta' => '43',
+          'region' => 'highlighted',
+          'weight' => '-10',
+        ),
+      ),
+    ),
+    'theme_html' => array(
+      'class' => 'program-home-page',
+    ),
+  );
+  $context->condition_mode = 0;
+
+  // Translatables
+  // Included for use with string extractors like potx.
+  t('Faculty and Research section');
+  t('special');
+  $export['faculty_research'] = $context;
+
+  $context = new stdClass();
+  $context->disabled = FALSE; /* Edit this to true to make a default context disabled initially */
+  $context->api_version = 3;
   $context->name = 'ps_bachelor_program_blocks';
   $context->description = 'Place blocks on the bachelor\'s program pages in the academic programs section.';
   $context->tag = 'academic-programs';
@@ -404,21 +434,28 @@ function context_settings_context_default_contexts() {
           'module' => 'menu_block',
           'delta' => '9',
           'region' => 'sidebar_first',
-          'weight' => '-10',
+          'weight' => 0,
         ),
-        'views-contact_info-block' => array(
+        'views-contact_info-block_5' => array(
           'module' => 'views',
-          'delta' => 'contact_info-block',
+          'delta' => 'contact_info-block_5',
           'region' => 'sidebar_second',
-          'weight' => '0',
+          'weight' => 0,
         ),
         'block-1' => array(
           'module' => 'block',
           'delta' => '1',
           'region' => 'sidebar_second',
-          'weight' => '1',
+          'weight' => 1,
         ),
       ),
+    ),
+    'theme' => array(
+      'title' => '',
+      'subtitle' => '',
+    ),
+    'theme_html' => array(
+      'class' => '',
     ),
   );
   $context->condition_mode = 1;
@@ -452,12 +489,16 @@ function context_settings_context_default_contexts() {
           'module' => 'block',
           'delta' => '14',
           'region' => 'highlighted',
-          'weight' => '0',
+          'weight' => 0,
         ),
       ),
     ),
     'theme_html' => array(
       'class' => 'program-home-page',
+    ),
+    'theme' => array(
+      'title' => '',
+      'subtitle' => '',
     ),
   );
   $context->condition_mode = 1;
@@ -572,21 +613,28 @@ function context_settings_context_default_contexts() {
           'module' => 'menu_block',
           'delta' => '11',
           'region' => 'sidebar_first',
-          'weight' => '-10',
+          'weight' => 0,
         ),
-        'views-contact_info-block_3' => array(
+        'views-contact_info-block_5' => array(
           'module' => 'views',
-          'delta' => 'contact_info-block_3',
+          'delta' => 'contact_info-block_5',
           'region' => 'sidebar_second',
-          'weight' => '0',
+          'weight' => 0,
         ),
         'block-18' => array(
           'module' => 'block',
           'delta' => '18',
           'region' => 'sidebar_second',
-          'weight' => '1',
+          'weight' => 1,
         ),
       ),
+    ),
+    'theme' => array(
+      'title' => '',
+      'subtitle' => '',
+    ),
+    'theme_html' => array(
+      'class' => '',
     ),
   );
   $context->condition_mode = 1;
@@ -620,12 +668,16 @@ function context_settings_context_default_contexts() {
           'module' => 'block',
           'delta' => '26',
           'region' => 'highlighted',
-          'weight' => '0',
+          'weight' => 0,
         ),
       ),
     ),
     'theme_html' => array(
       'class' => 'program-home-page',
+    ),
+    'theme' => array(
+      'title' => '',
+      'subtitle' => '',
     ),
   );
   $context->condition_mode = 1;
@@ -656,21 +708,28 @@ function context_settings_context_default_contexts() {
           'module' => 'menu_block',
           'delta' => '10',
           'region' => 'sidebar_first',
-          'weight' => '-10',
+          'weight' => 0,
         ),
-        'views-contact_info-block' => array(
+        'views-contact_info-block_5' => array(
           'module' => 'views',
-          'delta' => 'contact_info-block',
+          'delta' => 'contact_info-block_5',
           'region' => 'sidebar_second',
-          'weight' => '0',
+          'weight' => 0,
         ),
         'block-12' => array(
           'module' => 'block',
           'delta' => '12',
           'region' => 'sidebar_second',
-          'weight' => '1',
+          'weight' => 1,
         ),
       ),
+    ),
+    'theme' => array(
+      'title' => '',
+      'subtitle' => '',
+    ),
+    'theme_html' => array(
+      'class' => '',
     ),
   );
   $context->condition_mode = 1;
@@ -704,12 +763,16 @@ function context_settings_context_default_contexts() {
           'module' => 'block',
           'delta' => '4',
           'region' => 'highlighted',
-          'weight' => '0',
+          'weight' => 0,
         ),
       ),
     ),
     'theme_html' => array(
       'class' => 'program-home-page',
+    ),
+    'theme' => array(
+      'title' => '',
+      'subtitle' => '',
     ),
   );
   $context->condition_mode = 1;
@@ -730,6 +793,7 @@ function context_settings_context_default_contexts() {
     'node_taxonomy' => array(
       'values' => array(
         1 => 1,
+        450 => 450,
       ),
       'options' => array(
         'node_form' => '1',
@@ -737,6 +801,9 @@ function context_settings_context_default_contexts() {
     ),
   );
   $context->reactions = array(
+    'breadcrumb' => array(
+      0 => 'main-menu:node/18',
+    ),
     'menu' => array(
       0 => 'main-menu:node/18',
     ),
@@ -853,6 +920,42 @@ function context_settings_context_default_contexts() {
   t('Search pages');
   t('special');
   $export['search'] = $context;
+
+  $context = new stdClass();
+  $context->disabled = FALSE; /* Edit this to true to make a default context disabled initially */
+  $context->api_version = 3;
+  $context->name = 'videos';
+  $context->description = 'Place blocks on video pages';
+  $context->tag = 'special';
+  $context->conditions = array(
+    'node' => array(
+      'values' => array(
+        'video' => 'video',
+      ),
+      'options' => array(
+        'node_form' => '1',
+      ),
+    ),
+  );
+  $context->reactions = array(
+    'block' => array(
+      'blocks' => array(
+        'menu_block-18' => array(
+          'module' => 'menu_block',
+          'delta' => '18',
+          'region' => 'sidebar_first',
+          'weight' => '-10',
+        ),
+      ),
+    ),
+  );
+  $context->condition_mode = 1;
+
+  // Translatables
+  // Included for use with string extractors like potx.
+  t('Place blocks on video pages');
+  t('special');
+  $export['videos'] = $context;
 
   return $export;
 }
