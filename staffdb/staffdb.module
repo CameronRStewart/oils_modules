@@ -1670,28 +1670,35 @@ function staffdb_form_alter(&$form, &$form_state, $form_id) {
 /**
  * Prevent some fields from being edited.  These fields should be changed in the
  * remote database, and require approval of administration or other authorization.
- * 
+ *
  * @param $form
  * @param $form_state
  * @return mixed
  */
 function staffdb_after_build($form, &$form_state) {
-//  dpm($form);
-  if (isset($form['field_remote_id']) && isset($form['field_remote_id']['und'][0]['value']['#default_value'])) {
+  if (isset($form['field_remote_id'])) {
     $form['field_remote_id']['und'][0]['value']['#attributes']['readonly'] = 'readonly';
     $form_state['values']['field_remote_id']['und'][0]['value'] = $form['field_remote_id']['und'][0]['value']['#default_value'];
   }
-  if (isset($form['field_picture']) && isset($form['field_picture']['und'][0]['value']['#default_value'])) {
+  if (isset($form['field_picture'])) {
     $form['field_picture']['und'][0]['value']['#attributes']['readonly'] = 'readonly';
     $form_state['values']['field_picture']['und'][0]['value'] = $form['field_picture']['und'][0]['value']['#default_value'];
   }
-  $field2 = 'field_email';
-  $form[$field2]['und'][0]['value']['#attributes']['readonly'] = 'readonly';
-  $form_state['values'][$field2]['und'][0]['value'] = $form[$field2]['und'][0]['value']['#default_value'];
-
-  $form['field_classes']['und']['#attributes'] = array('onkeypress' => 'return false;');
-  $form['field_department']['und']['#attributes'] = array('onkeypress' => 'return false;');
-  $form['field_dean_s_cabinet_member']['und']['#attributes'] = array('onkeypress' => 'return false;', 'onclick' => 'return false;');
-  $form['field_visible']['und']['#attributes'] = array('onkeypress' => 'return false;', 'onclick' => 'return false;');
+  if (isset($form['field_email'])) {
+    $form['field_email']['und'][0]['value']['#attributes']['readonly'] = 'readonly';
+    $form_state['values']['field_email']['und'][0]['value'] = $form['field_email']['und'][0]['value']['#default_value'];
+  }
+  if (isset($form['field_classes'])) {
+    $form['field_classes']['und']['#attributes'] = array('onkeypress' => 'return false;');
+  }
+  if (isset($form['field_department'])) {
+    $form['field_department']['und']['#attributes'] = array('onkeypress' => 'return false;');
+  }
+  if (isset($form['field_dean_s_cabinet_member'])) {
+    $form['field_dean_s_cabinet_member']['und']['#attributes'] = array('onkeypress' => 'return false;', 'onclick' => 'return false;');
+  }
+  if (isset($form['field_visible'])) {
+    $form['field_visible']['und']['#attributes'] = array('onkeypress' => 'return false;', 'onclick' => 'return false;');
+  }
   return $form;
 }
