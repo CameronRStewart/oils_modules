@@ -1667,19 +1667,27 @@ function staffdb_form_alter(&$form, &$form_state, $form_id) {
   }
 }
 
-
+/**
+ * Prevent some fields from being edited.  These fields should be changed in the
+ * remote database, and require approval of administration or other authorization.
+ * 
+ * @param $form
+ * @param $form_state
+ * @return mixed
+ */
 function staffdb_after_build($form, &$form_state) {
 //  dpm($form);
-  $field1 = 'field_remote_id';
-  $form[$field1]['und'][0]['value']['#attributes']['readonly'] = 'readonly';
-  $form_state['values'][$field1]['und'][0]['value'] = $form[$field1]['und'][0]['value']['#default_value'];
+  if (isset($form['field_remote_id']) && isset($form['field_remote_id']['und'][0]['value']['#default_value'])) {
+    $form['field_remote_id']['und'][0]['value']['#attributes']['readonly'] = 'readonly';
+    $form_state['values']['field_remote_id']['und'][0]['value'] = $form['field_remote_id']['und'][0]['value']['#default_value'];
+  }
+  if (isset($form['field_picture']) && isset($form['field_picture']['und'][0]['value']['#default_value'])) {
+    $form['field_picture']['und'][0]['value']['#attributes']['readonly'] = 'readonly';
+    $form_state['values']['field_picture']['und'][0]['value'] = $form['field_picture']['und'][0]['value']['#default_value'];
+  }
   $field2 = 'field_email';
   $form[$field2]['und'][0]['value']['#attributes']['readonly'] = 'readonly';
   $form_state['values'][$field2]['und'][0]['value'] = $form[$field2]['und'][0]['value']['#default_value'];
-  $field3 = 'field_picture';
-  $form[$field3]['und'][0]['value']['#attributes']['readonly'] = 'readonly';
-  $form_state['values'][$field3]['und'][0]['value'] = $form[$field3]['und'][0]['value']['#default_value'];
-
 
   $form['field_classes']['und']['#attributes'] = array('onkeypress' => 'return false;');
   $form['field_department']['und']['#attributes'] = array('onkeypress' => 'return false;');
