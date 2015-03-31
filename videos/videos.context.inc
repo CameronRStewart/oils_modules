@@ -29,9 +29,9 @@ function videos_context_default_contexts() {
   $context->reactions = array(
     'block' => array(
       'blocks' => array(
-        'menu_block-17' => array(
+        'menu_block-18' => array(
           'module' => 'menu_block',
-          'delta' => '17',
+          'delta' => '18',
           'region' => 'sidebar_first',
           'weight' => '-10',
         ),
