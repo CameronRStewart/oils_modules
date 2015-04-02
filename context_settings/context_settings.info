@@ -17,6 +17,7 @@ features[context][] = cs_masters_program_blocks
 features[context][] = cs_section_main_page
 features[context][] = cs_sidemenu
 features[context][] = faculty_profile
+features[context][] = faculty_research
 features[context][] = ps_bachelor_program_blocks
 features[context][] = ps_bachelor_program_homepage
 features[context][] = ps_certificate_program_blocks
