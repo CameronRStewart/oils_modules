@@ -1662,8 +1662,11 @@ function staffdb_cron() {
  */
 
 function staffdb_form_alter(&$form, &$form_state, $form_id) {
-  if (isset($form['#node']) && $form_id == $form['#node']->type .'_node_form') {
-    $form['#after_build'][] = 'staffdb_after_build';
+  if (isset($form['#node']) && $form_id == $form['#node']->type .'_node_form' && $form['type']['#value'] == 'employee') { //
+    $form['#after_build'][] = 'staffdb_employee_after_build';
+  }
+  if (isset($form['#node']) && $form_id == $form['#node']->type .'_node_form' && $form['type']['#value'] == 'employee_location') {
+    $form['#after_build'][] = 'staffdb_employee_location_after_build';
   }
 }
 
@@ -1675,7 +1678,7 @@ function staffdb_form_alter(&$form, &$form_state, $form_id) {
  * @param $form_state
  * @return mixed
  */
-function staffdb_after_build($form, &$form_state) {
+function staffdb_employee_after_build($form, &$form_state) {
   if (isset($form['field_remote_id'])) {
     $form['field_remote_id']['und'][0]['value']['#attributes']['readonly'] = 'readonly';
     $form_state['values']['field_remote_id']['und'][0]['value'] = $form['field_remote_id']['und'][0]['value']['#default_value'];
@@ -1694,11 +1697,22 @@ function staffdb_after_build($form, &$form_state) {
   if (isset($form['field_department'])) {
     $form['field_department']['und']['#attributes'] = array('onkeypress' => 'return false;');
   }
+  if (isset($form['field_physical_location'])) {
+    $form['field_physical_location']['und']['#options'] = array_intersect_key($form['field_physical_location']['und']['#options'], array_flip($form['field_physical_location']['und']['#default_value']));
+  }
   if (isset($form['field_dean_s_cabinet_member'])) {
     $form['field_dean_s_cabinet_member']['und']['#attributes'] = array('onkeypress' => 'return false;', 'onclick' => 'return false;');
   }
   if (isset($form['field_visible'])) {
     $form['field_visible']['und']['#attributes'] = array('onkeypress' => 'return false;', 'onclick' => 'return false;');
   }
+  return $form;
+}
+
+function staffdb_employee_location_after_build($form, &$form_state) {
+//  dpm($form);
+//  dpm($form_state);
+  $form['title']['#attributes']['readonly'] = 'readonly';
+  $form_state['values']['title'] = $form['title']['#default_value'];
   return $form;
 }
