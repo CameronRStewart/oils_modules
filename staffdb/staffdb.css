@@ -1,0 +1,15 @@
+#edit-field-physical-location .entityconnect-add {
+    display: none !important;
+}
+
+#edit-field-physical-location .entityconnect-edit {
+    height: 20px !important;
+    left: 265px !important;
+    position: absolute !important;
+    width: 20px !important;
+}
+
+#edit-field-physical-location div.entityconnect-edit input {
+    height: 20px !important;
+    width: 20px !important;
+}

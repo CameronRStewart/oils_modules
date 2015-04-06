@@ -5,5 +5,8 @@ package = UNM University Libraries
 ; Any files that must be included in every page:
 files[]="staffdb.module,functions.php"
 
+;Add extra CSS:
+stylesheets[all][] = staffdb.css
+
 ; Add linked button to config page from modules page
 configure = admin/config/content/staffdb
