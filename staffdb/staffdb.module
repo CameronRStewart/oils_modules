@@ -627,7 +627,7 @@ function check_employee($input, $location_vids) {
   $wrapper->field_web_sites->set($w_tid);
 
   if (isset($location_vids) && is_array($location_vids)) {
-    $wrapper->field_physical_location->set($location_vids);
+    $wrapper->field_physical_location->set($location_vids[0]);
   }
 
   // Save edits or new node
@@ -1653,6 +1653,7 @@ function staffdb_user_login(&$edit, $account) {
  */
 
 function staffdb_cron() {
+  watchdog('staffdb_debug', 'Cron function triggered');
   start_import_update_employees();
 }
 
@@ -1679,6 +1680,8 @@ function staffdb_form_alter(&$form, &$form_state, $form_id) {
  * @return mixed
  */
 function staffdb_employee_after_build($form, &$form_state) {
+//  dpm($form);
+//  dpm($form_state);
   if (isset($form['field_remote_id'])) {
     $form['field_remote_id']['und'][0]['value']['#attributes']['readonly'] = 'readonly';
     $form_state['values']['field_remote_id']['und'][0]['value'] = $form['field_remote_id']['und'][0]['value']['#default_value'];
@@ -1710,9 +1713,10 @@ function staffdb_employee_after_build($form, &$form_state) {
 }
 
 function staffdb_employee_location_after_build($form, &$form_state) {
-//  dpm($form);
-//  dpm($form_state);
-  $form['title']['#attributes']['readonly'] = 'readonly';
-  $form_state['values']['title'] = $form['title']['#default_value'];
+  if (isset($form['title']['#default_value'])) {
+    $form['title']['#attributes']['readonly'] = 'readonly';
+    $form_state['values']['title'] = $form['title']['#default_value'];
+  }
+
   return $form;
 }
