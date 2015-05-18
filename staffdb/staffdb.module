@@ -410,7 +410,8 @@ function check_employee($input, $location_vids) {
     $wrapper->field_cv_link->set(NULL);
   }
   if (isset($input["body"]) && !empty($input["body"])) {
-    $wrapper->body->value->set($input["body"]);
+    $wrapper->body->value->set($input['body']);
+    $wrapper->body->format = "full_html";
   }
   else {
     $wrapper->body->value->set(NULL);
