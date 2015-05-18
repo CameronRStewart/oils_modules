@@ -689,10 +689,10 @@ function check_locations($input, $remote_id) {
       else {
         $loc_vid = NULL;
       }
-      $location_vids[] = insert_update_location_node($box_info, $remote_id, $tid, $loc_vid);
+      $location_nids[] = insert_update_location_node($box_info, $remote_id, $tid, $loc_vid);
     }
   }
-  return $location_vids;
+  return $location_nids;
 }
 
 // Creates employee_location instance, returns vid of node
@@ -725,7 +725,7 @@ function insert_update_location_node($box_info, $remote_id, $tid, $vid = NULL) {
       $existing_location->field_location->set(NULL);
     }
     $existing_location->save();
-    $location_id = $existing_location->vid->value();
+    $location_id = $existing_location->nid->value();
   }
   else {
     $values = array(
@@ -751,8 +751,9 @@ function insert_update_location_node($box_info, $remote_id, $tid, $vid = NULL) {
     }
     $wrapper->title->set($remote_id);
     $wrapper->save();
-    $location_id = $wrapper->vid->value();
+    $location_id = $wrapper->nid->value();
   }
+  dpm($location_id);
   return $location_id;
 }
 
