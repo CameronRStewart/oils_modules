@@ -753,7 +753,6 @@ function insert_update_location_node($box_info, $remote_id, $tid, $vid = NULL) {
     $wrapper->save();
     $location_id = $wrapper->nid->value();
   }
-  dpm($location_id);
   return $location_id;
 }
 
