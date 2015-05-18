@@ -6,20 +6,7 @@ include('functions.php');
  * @file
  * A module that displays employee information.
  */
-/**
- * Implements hook_block_info().
- */
 
-function staffdb_block_info() {
-
-  $blocks['staffdb'] = array(
-    // The name that will appear in the block list.
-    'info' => t('Employee List'),
-    // Default setting.
-    'cache' => DRUPAL_CACHE_PER_ROLE,
-  );
-  return $blocks;
-}
 
 /**
  *  Get employee information
@@ -27,37 +14,6 @@ function staffdb_block_info() {
  * @return
  *  A result set of employee information
  */
-
-function get_staff_info() {
-
-  // Set db connection
-  db_set_active('remote');
-
-  // Execute query
-  $result = db_query('select e.id, e.first_name, e.middle_name, e.last_name, e.visible, e.email, e.rg_profile, e.picture, e.blurb, e.codhead, e.current_teach, e.ul_employee, e.oils_employee, e.cv_link, d.dept_id, d.dept, ed.emp2dept_id, b.box_id, b.room, b.telephone, eb.emp2box_id, l.loc_id, l.loc, r.rank, s.sub_id, s.sub, es.emp2subjects_id, w.websites_id, w.website, ew.emp2websites_id, res.research_id, res.research, eres.emp2research_id, t.title, ec.emp2classes_id, c.classes_id, c.classes
- from {employee} e
- left join ({dept} d, {emp2dept} ed)
- on (e.id = ed.emp_id and ed.dept_id = d.dept_id)
- left join ({box} b, {emp2box} eb, loc l)
- on (e.id = eb.emp_id and eb.box_id = b.box_id
- and b.loc_id = l.loc_id)
- left join ({title} t, {emp2title} et)
- on (e.id = et.emp_id and et.title_id = t.title_id)
- left join ({subs} s, {emp2subjects} es)
- on (e.id = es.emp_id and es.subjects_id = s.sub_id)
- left join ({rank} r, {emp2rank} er)
- on (e.id = er.emp_id and er.rank_id = r.rank_id)
- left join ({websites} w, {emp2websites} ew) on (e.id = ew.emp_id and ew.websites_id = w.websites_id)
- left join ({research} res, {emp2research} eres) on (e.id = eres.emp_id and eres.research_id = res.research_id)
- left join ({classes} c, {emp2classes} ec) on (e.id = ec.emp_id and ec.classes_id = c.classes_id)
- where e.visible = 1 and e.oils_employee = 1 order by last_name, first_name, middle_name'); //
-
-  // Revert to default db connection
-  db_set_active();
-
-  return $result;
-}
-
 
 /**
  * Implements hook_help().
@@ -83,6 +39,9 @@ function staffdb_help($path, $arg) {
  * Implements hook_menu().
  */
 function staffdb_menu() {
+
+
+
   $items = array();
   $items['admin/config/content/staffdb-import'] = array(
     'title' => 'Employee Database Module: Import and Update Records',
@@ -93,8 +52,92 @@ function staffdb_menu() {
     'type' => MENU_NORMAL_ITEM,
   );
 
+  $items['about-oils/directory'] = array(
+    'type' => MENU_CALLBACK,
+    //'menu_name' => 'main-menu',
+    //'plid' => 407,
+    'title' => t('Faculty and Staff Directory'),
+    'description' => 'Contact Information for OILS Faculty and Staff',
+    'page callback' => 'staffdb_directory',
+    'access callback' => 'user_access',
+    'access arguments' => array('access content'),
+  );
+
   return $items;
 }
+
+
+/**
+ * Page callback: Faculty and Staff Directory
+ */
+function staffdb_directory() {
+  $items = array();
+
+  $query = db_select('node', 'n');
+  $query->fields('n', array('nid'));
+  $query->condition('type', 'employee');
+  $query->join('field_data_field_oils_employee', 'f', 'n.nid = f.entity_id');
+  $query->condition('f.field_oils_employee_value', '1');
+  $result = $query->execute()->fetchCol();
+  $nodes = node_load_multiple($result);
+  foreach ($nodes as $node) {
+    $full_name = l($node->title, drupal_get_path_alias("node/$node->nid"));
+    $rank = taxonomy_term_load(field_get_items('node', $node, 'field_faculty_rank')[0]['tid'])->name;
+    $title = taxonomy_term_load(field_get_items('node', $node, 'field_job_title')[0]['tid'])->name;
+    $title_rank = $rank;
+    $title_rank .= ($rank and $title) ? "<br/>" : "";
+    $title_rank .= $title;
+    $email = l(field_get_items('node', $node, 'field_email')[0]['safe_value'], "mailto:".field_get_items('node', $node, 'field_email')[0]['safe_value'], array('absolute' => TRUE));
+
+    if($location = node_load(field_get_items('node', $node, 'field_physical_location')[0]['target_id'])) {
+      $building = taxonomy_term_load(field_get_items('node', $location, 'field_location')[0]['tid'])->name;
+      $room = field_get_items('node', $location, 'field_room_number')[0]['value'];
+      $phone = field_get_items('node', $location, 'field_phone_number')[0]['value'];
+    }
+
+    $items[] = array(
+      'data' => array(
+        $full_name,
+        $title_rank,
+        $building . " ". $room,
+        $phone,
+        $email
+      ),
+    );
+
+    unset($full_name, $rank, $title, $title_rank, $email, $location, $building, $room, $phone);
+  }
+
+  $output = array(
+    'info' => array(
+      '#type' => 'markup',
+      '#prefix' => '<p>',
+      '#suffix' => '</p>'
+    ),
+    'table' => array(
+      '#theme' => 'table',
+    )
+  );
+
+  // No results.
+  if (empty($items)) {
+    $output['info']['#markup'] = t('No employee information available.');
+  }
+  else {
+    $output['table']['#header'] = array(
+      array('data' => t('Name')),
+      array('data' => t('Title/Rank')),
+      array('data' => t('Office')),
+      array('data' => t('Phone')),
+      array('data' => t('Email')),
+    );
+    $output['table']['#rows'] = $items;
+  }
+
+  return $output;
+}
+
+
 
 /**
  * Page callback: staffdb import/update
