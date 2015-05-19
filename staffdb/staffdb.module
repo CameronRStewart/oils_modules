@@ -14,6 +14,36 @@ include('functions.php');
  * @return
  *  A result set of employee information
  */
+function get_staff_info() {
+
+  // Set db connection
+  db_set_active('remote');
+
+  // Execute query
+  $result = db_query('select e.id, e.first_name, e.middle_name, e.last_name, e.visible, e.email, e.rg_profile, e.picture, e.blurb, e.codhead, e.current_teach, e.ul_employee, e.oils_employee, e.cv_link, d.dept_id, d.dept, ed.emp2dept_id, b.box_id, b.room, b.telephone, eb.emp2box_id, l.loc_id, l.loc, r.rank, s.sub_id, s.sub, es.emp2subjects_id, w.websites_id, w.website, ew.emp2websites_id, res.research_id, res.research, eres.emp2research_id, t.title, ec.emp2classes_id, c.classes_id, c.classes
+ from {employee} e
+ left join ({dept} d, {emp2dept} ed)
+ on (e.id = ed.emp_id and ed.dept_id = d.dept_id)
+ left join ({box} b, {emp2box} eb, loc l)
+ on (e.id = eb.emp_id and eb.box_id = b.box_id
+ and b.loc_id = l.loc_id)
+ left join ({title} t, {emp2title} et)
+ on (e.id = et.emp_id and et.title_id = t.title_id)
+ left join ({subs} s, {emp2subjects} es)
+ on (e.id = es.emp_id and es.subjects_id = s.sub_id)
+ left join ({rank} r, {emp2rank} er)
+ on (e.id = er.emp_id and er.rank_id = r.rank_id)
+ left join ({websites} w, {emp2websites} ew) on (e.id = ew.emp_id and ew.websites_id = w.websites_id)
+ left join ({research} res, {emp2research} eres) on (e.id = eres.emp_id and eres.research_id = res.research_id)
+ left join ({classes} c, {emp2classes} ec) on (e.id = ec.emp_id and ec.classes_id = c.classes_id)
+ where e.visible = 1 and e.oils_employee = 1 order by last_name, first_name, middle_name'); //
+
+  // Revert to default db connection
+  db_set_active();
+
+  return $result;
+}
+
 
 /**
  * Implements hook_help().
