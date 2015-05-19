@@ -39,9 +39,6 @@ function staffdb_help($path, $arg) {
  * Implements hook_menu().
  */
 function staffdb_menu() {
-
-
-
   $items = array();
   $items['admin/config/content/staffdb-import'] = array(
     'title' => 'Employee Database Module: Import and Update Records',
@@ -72,7 +69,9 @@ function staffdb_menu() {
  */
 function staffdb_directory() {
   $items = array();
+  $full_name = $rank = $title = $title_rank = $email = $location = $building = $room = $phone = "";
 
+  // Find all oils employees and load thier nodes
   $query = db_select('node', 'n');
   $query->fields('n', array('nid'));
   $query->condition('type', 'employee');
@@ -80,19 +79,29 @@ function staffdb_directory() {
   $query->condition('f.field_oils_employee_value', '1');
   $result = $query->execute()->fetchCol();
   $nodes = node_load_multiple($result);
+
   foreach ($nodes as $node) {
     $full_name = l($node->title, drupal_get_path_alias("node/$node->nid"));
-    $rank = taxonomy_term_load(field_get_items('node', $node, 'field_faculty_rank')[0]['tid'])->name;
-    $title = taxonomy_term_load(field_get_items('node', $node, 'field_job_title')[0]['tid'])->name;
+    $rank = field_get_items('node', $node, 'field_faculty_rank');
+    $rank = taxonomy_term_load($rank[0]['tid'])->name;
+    $title = field_get_items('node', $node, 'field_job_title');
+    $title = taxonomy_term_load($title[0]['tid'])->name;
     $title_rank = $rank;
     $title_rank .= ($rank and $title) ? "<br/>" : "";
     $title_rank .= $title;
-    $email = l(field_get_items('node', $node, 'field_email')[0]['safe_value'], "mailto:".field_get_items('node', $node, 'field_email')[0]['safe_value'], array('absolute' => TRUE));
+    $email = field_get_items('node', $node, 'field_email');
+    $email = l($email[0]['safe_value'], "mailto:".$email[0]['safe_value'], array('absolute' => TRUE));
 
-    if($location = node_load(field_get_items('node', $node, 'field_physical_location')[0]['target_id'])) {
-      $building = taxonomy_term_load(field_get_items('node', $location, 'field_location')[0]['tid'])->name;
-      $room = field_get_items('node', $location, 'field_room_number')[0]['value'];
-      $phone = field_get_items('node', $location, 'field_phone_number')[0]['value'];
+    $location = field_get_items('node', $node, 'field_physical_location');
+    if($location = node_load($location[0]['target_id'])) {
+      $loc = field_get_items('node', $location, 'field_location');
+      $building = taxonomy_term_load($loc[0]['tid'])->name;
+
+      $room = field_get_items('node', $location, 'field_room_number');
+      $room = $room[0]['value'];
+
+      $phone = field_get_items('node', $location, 'field_phone_number');
+      $phone = $phone[0]['value'];
     }
 
     $items[] = array(
