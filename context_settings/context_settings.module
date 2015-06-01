@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the Context Settings feature.
+ */
+
+include_once 'context_settings.features.inc';

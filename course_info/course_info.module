@@ -1,0 +1,788 @@
+<?php
+/**
+ * @file
+ * A description of what your module does.
+ */
+
+/**
+ *  Implements hook_menu().
+ */
+function course_info_menu() {
+  $items = array();
+  $items['admin/config/services/course_info'] = array(
+    'title' => t('OILS Course Information Settings'),
+    'description' => 'Configure URL of \'UNM Open Data\' for importing into Drupal.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('course_info_admin_form'),
+    'access arguments' => array('administer OILS course info settings'),
+    'file' => 'course_info.admin_form.inc',
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['admin/config/services/course_info/settings'] = array(
+    'title' => t('Settings'),
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => 0,
+  );
+
+  return $items;
+}
+
+/**
+ *  Implements hook_permission().
+ */
+function course_info_permission() {
+  return array(
+    'administer course info settings' => array(
+      'title' => t('Administer OILS course info configuration'),
+      'description' => t('Perform administration tasks on OILS course info module.'),
+    ),
+  );
+}
+
+/**
+ * Grab unm courses information xml file.
+ * Parse, and place OILS relevent info into DB.
+ *
+ * @return void
+ */
+function load_course_info_from_web() {
+
+  $destination = 'public://';
+  // Grab URL of course data file
+  $result = db_query('SELECT * FROM courses_info_admin_extras');
+  // There should only be one...
+  $reader = new XMLReader();
+  foreach ($result as $row) {
+    $college_code = $row->college_code;
+    $file = system_retrieve_file($row->url, $destination, FALSE, FILE_EXISTS_REPLACE);
+    if ($file) {
+      $reader->open($file);
+      while ($reader->read()) {
+        if ($reader->name == 'college' && $reader->getAttribute('code') == $college_code) {
+          break;
+        }
+      }
+      $tree = $reader->readInnerXml();
+      if (isset($tree) && !empty($tree)) {
+        $data = simplexml_load_string($tree);
+        $data = xmlToArray($data);
+        /*
+        * For the time being, we are starting with the creation
+        * of Departments and moving downwards through the tree.
+        */
+        $entity_nid_list = buildEntityLists();
+        buildCourseInfoEntities($data['department'], 'department', $entity_nid_list);
+        return "XML Loaded";
+      }
+      else {
+        drupal_set_message('The values provided did not yield any data.  Please re-enter your college code or URL.');
+        return "XML Not Reloaded";
+      }
+    }
+    else {
+      $msg = "Unable to retrieve " . $row->url . ", course nodes will not be updated.";
+      return $msg;
+    }
+
+
+  }
+
+
+}
+
+// Simply returns an array of all existing nodes' titles and node ids
+function buildEntityLists($entity_type_list = array()) {
+
+  if (!isset($entity_type_list) || empty($entity_type_list)) {
+    $entity_type_list = array(
+      'department',
+      'subject',
+      'course',
+      'section',
+      'employee'
+    );
+  }
+
+  $entity_nid_list = array();
+
+  foreach ($entity_type_list as $entity_type) {
+
+    $entity_nid_list[$entity_type] = array();
+
+
+    // I have to do something special with instructors since I dont key off of
+    // Their name, I key off of their email (it's safer and unique).
+    if ($entity_type == 'employee') {
+      $query = new EntityFieldQuery();
+
+      $query->entityCondition('entity_type', 'node')
+        ->entityCondition('bundle', $entity_type)
+        ->fieldCondition('field_email');
+
+      $result = $query->execute();
+
+      if (isset($result['node'])) {
+        $nodes = node_load_multiple(array_keys($result['node']));
+
+        foreach ($nodes as $node) {
+          $entity_nid_list[$entity_type][$node->field_email['und'][0]['value']] = $node->nid;
+        }
+      }
+
+    }
+    else {
+      $result = db_query("SELECT n.nid, n.title FROM {node} n WHERE n.type = :type ", array(':type' => $entity_type));
+
+      foreach ($result as $record) {
+        $entity_nid_list[$entity_type][$record->title] = $record->nid;
+      }
+    }
+
+  }
+
+  return $entity_nid_list;
+
+}
+
+// Similar to buildEntityLists, however this pre-loads all nodes.
+function buildEntityNodeLists($entity_type_list = array()) {
+
+  if (!isset($entity_type_list) || empty($entity_type_list)) {
+    $entity_type_list = array(
+      'department',
+      'subject',
+      'course',
+      'section',
+      'employee'
+    );
+  }
+
+  $entity_nid_list = array();
+
+  foreach ($entity_type_list as $entity_type) {
+
+    $entity_nid_list[$entity_type] = array();
+
+
+    // I have to do something special with instructors since I dont key off of
+    // Their name, I key off of their email (it's safer and unique).
+    if ($entity_type == 'employee') {
+      $query = new EntityFieldQuery();
+
+      $query->entityCondition('entity_type', 'node')
+        ->entityCondition('bundle', $entity_type)
+        ->fieldCondition('field_email');
+
+      $result = $query->execute();
+
+      if (isset($result['node'])) {
+        $nodes = node_load_multiple(array_keys($result['node']));
+
+        foreach ($nodes as $node) {
+          $entity_nid_list[$entity_type][$node->field_email['und'][0]['value']] = $node;
+        }
+      }
+
+    }
+    else {
+      $query = new EntityFieldQuery();
+
+      $query->entityCondition('entity_type', 'node')
+        ->entityCondition('bundle', $entity_type);
+
+      $result = $query->execute();
+
+      if (isset($result['node'])) {
+        $nodes = node_load_multiple(array_keys($result['node']));
+
+        foreach ($nodes as $node) {
+          $entity_nid_list[$entity_type][$node->title] = $node;
+        }
+      }
+    }
+
+  }
+
+
+  return $entity_nid_list;
+
+}
+
+/*
+ * This creates a new node of type $type with data in $data
+ *
+ * @param $data - subset of XML data, hopefully beginning at a value of type $type.
+ * @param $type - type of entity to create
+ *
+ * @return node_id
+ */
+function buildCourseInfoEntities($data, $type, $entity_nid_list) {
+
+  $title_key = "";
+  switch ($type) {
+    case 'department':
+      $title_key = '@code';
+      break;
+    case 'subject':
+      $title_key = '@code';
+      //code
+      break;
+    case 'course':
+      $title_key = '@number';
+      //code
+      break;
+    case 'section':
+      $title_key = '@crn';
+      //code
+      break;
+    case 'instructor':
+      $title_key = '@title';
+      //code
+      break;
+  }
+
+
+  $current_title_key = $data[$title_key];
+  $entities_of_this_type = $entity_nid_list[$type];
+
+  if (array_key_exists($current_title_key, $entities_of_this_type)) {
+    $entity = $entities_of_this_type[$current_title_key];
+    $wrapper = entity_metadata_wrapper('node', $entity);
+  }
+  else {
+    $wrapper = createEntity($type);
+  }
+
+
+  switch ($type) {
+    case 'department':
+      // Need to test for subject plurality here
+      if (testNewEntityPlurality($data['subject'])) {
+        // Hacky, but makes the foreach work no matter what.
+        $subjects = $data['subject'];
+      }
+      else {
+        $subjects[0] = $data['subject'];
+      }
+
+
+      // Set all values
+      if (isset($data["@code"]) && !empty($data["@code"])) {
+        $wrapper->title->set($data["@code"]);
+      }
+      if (isset($data["@name"]) && !empty($data["@name"])) {
+        $wrapper->field_department_name->set($data["@name"]);
+      }
+
+      $wrapper->field_subject = array();
+      foreach ($subjects as $subject) {
+        $subject_nid = buildCourseInfoEntities($subject, 'subject', $entity_nid_list);
+        $wrapper->field_subject[] = $subject_nid;
+      }
+      // The End - Save It
+      $wrapper->save();
+      break;
+
+    case 'subject':
+      if (testNewEntityPlurality($data['course'])) {
+        $courses = $data['course'];
+      }
+      else {
+        $courses[0] = $data['course'];
+      }
+
+
+      // Set all values
+      if (isset($data["@code"]) && !empty($data["@code"])) {
+        $wrapper->title->set($data["@code"]);
+      }
+      if (isset($data["@name"]) && !empty($data["@name"])) {
+        $wrapper->field_subject_name->set($data["@name"]);
+      }
+
+      $wrapper->field_course = array();
+      foreach ($courses as $course) {
+        $course_nid = buildCourseInfoEntities($course, 'course', $entity_nid_list);
+        $wrapper->field_course[] = $course_nid;
+      }
+
+      $wrapper->save();
+      break;
+
+    case 'course':
+      if (testNewEntityPlurality($data['section'])) {
+        $sections = $data['section'];
+      }
+      else {
+        $sections[0] = $data['section'];
+      }
+
+
+      // Set all values
+      if (isset($data["@number"]) && !empty($data["@number"])) {
+        $wrapper->title->set($data["@number"]);
+      }
+      if (isset($data["@title"]) && !empty($data["@title"])) {
+        $wrapper->field_course_title->set($data["@title"]);
+      }
+      if (isset($data["catalog-description"]) && !empty($data["catalog-description"])) {
+        $wrapper->body->value->set($data["catalog-description"]);
+      }
+
+      $wrapper->field_section = array();
+      foreach ($sections as $section) {
+        $section_nid = buildCourseInfoEntities($section, 'section', $entity_nid_list);
+        $wrapper->field_section[] = $section_nid;
+      }
+
+      $wrapper->save();
+      break;
+
+    case 'section':
+      // Set all values
+
+      // title
+      if (isset($data["@crn"]) && !empty($data["@crn"])) {
+        $wrapper->title->set($data["@crn"]);
+      }
+
+      // field_number
+      if (isset($data["@number"]) && !empty($data["@number"])) {
+        $wrapper->field_number->set($data["@number"]);
+      }
+      else {
+        $wrapper->field_number->set(NULL);
+      }
+
+      // field_part_of_term
+      if (isset($data["@part-of-term"]) && !empty($data["@part-of-term"])) {
+        $wrapper->field_part_of_term->set($data["@part-of-term"]);
+      }
+      else {
+        $wrapper->field_part_of_term->set(NULL);
+      }
+
+      //field_status
+      if (isset($data["@status"]) && !empty($data["@status"])) {
+        $wrapper->field_status->set($data["@status"]);
+      }
+      else {
+        $wrapper->field_status->set(NULL);
+      }
+
+      // body
+      if (isset($data["text"]) && !empty($data["text"])) {
+        $wrapper->body->value->set($data["text"]);
+      }
+      else {
+        $wrapper->body->value->set(NULL);
+      }
+
+      // field_section_title
+      if (isset($data["section-title"]) && !empty($data["section-title"])) {
+        $wrapper->field_section_title->set($data["section-title"]);
+      }
+      else {
+        $wrapper->field_section_title->set(NULL);
+      }
+
+      /* This is bad, the assumption is that there can be multiple meeting-time
+       * fields for each section somehow.  Right now I am only taking the first.
+       * This needs to be fixed.
+       * TODO: is there ever a time where there are multiple meeting times?
+       *
+       * Also, this is named very poorly.  It couldnt change from its original name
+       * to start-date, hence date_range for the field name.
+       */
+      if (isset($data['meeting-times']['meeting-time']) && !empty($data["meeting-times"]['meeting-time'])) {
+        if (isset($data["meeting-times"]['meeting-time']['start-date']) && !empty($data["meeting-times"]['meeting-time']['start-date'])) {
+          $wrapper->field_date_range->set($data["meeting-times"]['meeting-time']['start-date']);
+        }
+        else {
+          $wrapper->field_date_range->set(NULL);
+        }
+        if (isset($data["meeting-times"]['meeting-time']['end-date']) && !empty($data["meeting-times"]['meeting-time']['end-date'])) {
+          $wrapper->field_end_date->set($data["meeting-times"]['meeting-time']['end-date']);
+        }
+        else {
+          $wrapper->field_end_date->set(NULL);
+        }
+
+        //field_meeting_days
+        /*
+         * This field also exists in the XML data as multiple entries.
+         * I can, for now, just concatenate them together to keep each day as one field 'days.'
+         */
+        if (isset($data["meeting-times"]['meeting-time']['days']) && !empty($data["meeting-times"]['meeting-time']['days'])) {
+          $days = array();
+          if (!empty($data['meeting-times']['meeting-time']['days']['day'])) {
+            if (testNewEntityPlurality($data['meeting-times']['meeting-time']['days']['day'])) {
+              $days = $data['meeting-times']['meeting-time']['days']['day'];
+            }
+            else {
+              $days[0] = $data['meeting-times']['meeting-time']['days']['day'];
+            }
+          }
+          $day_str = '';
+          foreach ($days as $d) {
+            $day_str .= $d;
+          }
+          $wrapper->field_meeting_days->set($day_str);
+        }
+        else {
+          $wrapper->field_meeting_days->set(NULL);
+        }
+
+        //field_meeting_time  - corresponds to start-time.
+        if (isset($data["meeting-times"]['meeting-time']['start-time']) && !empty($data["meeting-times"]['meeting-time']['start-time'])) {
+          $wrapper->field_meeting_time->set($data["meeting-times"]['meeting-time']['start-time']);
+        }
+        else {
+          $wrapper->field_meeting_time->set(NULL);
+        }
+
+        //field_end_time
+        if (isset($data["meeting-times"]['meeting-time']['end-time']) && !empty($data["meeting-times"]['meeting-time']['end-time'])) {
+          $wrapper->field_end_time->set($data["meeting-times"]['meeting-time']['end-time']);
+        }
+        else {
+          $wrapper->field_end_time->set(NULL);
+        }
+
+        //field_building_name
+        if (isset($data["meeting-times"]['meeting-time']['bldg']) && !empty($data["meeting-times"]['meeting-time']['bldg'])) {
+          if (isset($data["meeting-times"]['meeting-time']['bldg']['@code']) && !empty($data["meeting-times"]['meeting-time']['bldg']['@code'])) {
+            $wrapper->field_building_code->set($data["meeting-times"]['meeting-time']['bldg']['@code']);
+          }
+          else {
+            $wrapper->field_building_code->set(NULL);
+          }
+
+          if (isset($data["meeting-times"]['meeting-time']['bldg']['$']) && !empty($data["meeting-times"]['meeting-time']['bldg']['$'])) {
+            $wrapper->field_building_name->set($data["meeting-times"]['meeting-time']['bldg']['$']);
+          }
+          else {
+            $wrapper->field_building_name->set(NULL);
+          }
+        }
+        else {
+          $wrapper->field_building_name->set(NULL);
+          $wrapper->field_building_code->set(NULL);
+        }
+
+        //field_room_number
+        if (isset($data["meeting-times"]['meeting-time']['room']) && !empty($data["meeting-times"]['meeting-time']['room'])) {
+          $wrapper->field_room_number->set($data["meeting-times"]['meeting-time']['room']);
+        }
+        else {
+          $wrapper->field_room_number->set(NULL);
+        }
+      }
+      else {
+        $wrapper->field_date_range->set(NULL);
+        $wrapper->field_end_date->set(NULL);
+        $wrapper->field_meeting_days->set(NULL);
+        $wrapper->field_meeting_time->set(NULL);
+        $wrapper->field_end_time->set(NULL);
+        $wrapper->field_building_code->set(NULL);
+        $wrapper->field_building_name->set(NULL);
+      }
+
+      //field_instructional_method
+      if (isset($data["instructional-method"]) && !empty($data["instructional-method"])) {
+        if (isset($data["instructional-method"]['$']) && !empty($data["instructional-method"]['$'])) {
+          $wrapper->field_instructional_method->set($data["instructional-method"]['$']);
+        }
+        else {
+          $wrapper->field_instructional_method->set(NULL);
+        }
+      }
+      else {
+        $wrapper->field_instructional_method->set(NULL);
+      }
+
+      //field_delivery_type
+      if (isset($data["delivery-type"]['$']) && !empty($data["delivery-type"]['$'])) {
+        $wrapper->field_delivery_type->set($data["delivery-type"]['$']);
+      }
+      else {
+        $wrapper->field_delivery_type->set(NULL);
+      }
+
+      //field_credits
+      if (isset($data["credits"]) && !empty($data["credits"])) {
+        $wrapper->field_credits->set($data["credits"]);
+      }
+      else {
+        $wrapper->field_credits->set(NULL);
+      }
+
+      //field_fees
+      if (isset($data["fees"]) && !empty($data["fees"])) {
+        $wrapper->field_fees->set($data["fees"]);
+      }
+      else {
+        $wrapper->field_fees->set(NULL);
+      }
+
+
+      //field_waitlist
+      if (isset($data["waitlist"]['$']) && !empty($data["waitlist"]['$'])) {
+        $wrapper->field_waitlist->set($data["waitlist"]['$']);
+      }
+      else {
+        $wrapper->field_waitlist->set('0');
+      }
+
+      //field_waitlist_max
+      if (isset($data["waitlist"]["@max"]) && !empty($data["waitlist"]["@max"]) && $data["waitlist"]["@max"] != 0) {
+        $wrapper->field_waitlist_max->set($data["waitlist"]["@max"]);
+      }
+      else {
+        $wrapper->field_waitlist_max->set(NULL);
+      }
+
+      //field_enrollment
+      if (isset($data["enrollment"]['$']) && !empty($data["enrollment"]['$'])) {
+        $wrapper->field_enrollment->set($data["enrollment"]['$']);
+      }
+      else {
+        $wrapper->field_enrollment->set('0');
+      }
+
+      //field_enrollment_max
+      if (isset($data["enrollment"]['@max']) && !empty($data["enrollment"]['@max']) && $data["enrollment"]["@max"] != 0) {
+        $wrapper->field_enrollment_max->set($data["enrollment"]['@max']);
+      }
+      else {
+        $wrapper->field_enrollment_max->set(NULL);
+      }
+
+
+      if (!empty($data['instructors']['instructor'])) {
+        if (testNewEntityPlurality($data['instructors']['instructor'])) {
+          $instructors = $data['instructors']['instructor'];
+        }
+        else {
+          $instructors[0] = $data['instructors']['instructor'];
+        }
+
+        $instructor_nids = array();
+        foreach ($instructors as $instructor) {
+          // Look up Employee table
+          $query = new EntityFieldQuery();
+          // Query employee table for $instructor['email']
+          $query->entityCondition('entity_type', 'node')
+            ->entityCondition('bundle', 'employee')
+            ->fieldCondition('field_email', 'value', $instructor['email'], '=');
+
+          $result = $query->execute();
+
+          // If employee with matching email exists in 'Employee' table...
+          if (!empty($result['node'])) {
+            $nids = array_keys($result['node']);
+
+            // There shouldn't be multiples, but just in case.
+            if (sizeof($nids) > 1) {
+              // We can only grab the first entry, then display an error
+              drupal_set_message(t('There seem to be two Employee nodes with the email address @email.  Selecting only the first.', array('@email' => $$instructor['name'])));
+            }
+
+            $instructor_nids[] = $nids[0];
+          }
+
+          else {
+
+            // Create a shell account for this employee with the info we have
+            $wrapper2 = createEntity('employee');
+
+            $fullname = '';
+
+            if (isset($instructor['email']) && !empty($instructor['email'])) {
+              $wrapper2->field_email->set($instructor['email']);
+            }
+
+            if (isset($instructor['first']) && !empty($instructor['first'])) {
+              $wrapper2->field_first_name->set($instructor['first']);
+              $fullname = $instructor['first'];
+            }
+
+            if (isset($instructor['middleInitial']) && !empty($instructor['middleInitial'])) {
+              $wrapper2->field_middle_name->set($instructor['middleInitial']);
+              $fullname .= " " . $instructor['middleInitial'];
+            }
+
+            if (isset($instructor['last']) && !empty($instructor['last'])) {
+              $wrapper2->field_last_name->set($instructor['last']);
+              $fullname .= " " . $instructor['last'];
+            }
+
+            $wrapper2->title->set($fullname);
+            $wrapper2->save();
+            $instructor_nids[] = $wrapper2->getIdentifier();
+
+          }
+        }
+        $wrapper->field_instructor->set($instructor_nids);
+      } else {
+        $wrapper->field_instructor->set(NULL);
+      }
+
+      $wrapper->save();
+      break;
+
+    case 'instructor':
+      //This is all managed within the code for each 'Section.'
+      break;
+  }
+  return $wrapper->nid->raw();
+
+}
+
+
+function createEntity($type) {
+  global $user;
+  $values = array(
+    'type' => $type,
+    'uid' => $user->uid,
+    'status' => 1,
+    'comment' => 0,
+    'promote' => 0,
+  );
+  $entity = entity_create('node', $values);
+  $wrapper = entity_metadata_wrapper('node', $entity);
+
+  return $wrapper;
+}
+
+/*
+ * This is a sort-of hacky specialized function to assess the sub-array at the point passed in.
+ * It tries to infer based based on the output characteristics od json_decode whether there are multiple
+ * values of a certain type.
+ *
+ * ex:
+ *
+ * Say you have a course array: $course.
+ * You can have multiple sections, one section, or none at all.
+ *
+ * $course['section'][0],[1],[2]... implies that there are mulitple sections
+ * $course['section'] ... If there is section data for an individual section below this, then there is only one.
+ *
+ * We therefore have to test whether there is an int in the case of plurality.
+ * In our case the most logical conclusion was to test for '0'.
+ *
+*/
+function testNewEntityPlurality($data) {
+  if (sizeof($data) > 1) {
+    if (array_key_exists(0, $data)) {
+      return TRUE;
+    }
+    else {
+      return FALSE;
+    }
+  }
+  else {
+    return FALSE;
+  }
+}
+
+/*
+ * Custom method to convert xml to an array with all of its attributes
+ */
+function xmlToArray($xml, $options = array()) {
+  $defaults = array(
+    'namespaceSeparator' => ':',
+    //you may want this to be something other than a colon
+    'attributePrefix' => '@',
+    //to distinguish between attributes and nodes with the same name
+    'alwaysArray' => array(),
+    //array of xml tag names which should always become arrays
+    'autoArray' => TRUE,
+    //only create arrays for tags which appear more than once
+    'textContent' => '$',
+    //key used for the text content of elements
+    'autoText' => TRUE,
+    //skip textContent key if node has no attributes or child nodes
+    'keySearch' => FALSE,
+    //optional search and replace on tag and attribute names
+    'keyReplace' => FALSE
+    //replace values for above search values (as passed to str_replace())
+  );
+  $options = array_merge($defaults, $options);
+  $namespaces = $xml->getDocNamespaces();
+  $namespaces[''] = NULL; //add base (empty) namespace
+
+  //get attributes from all namespaces
+  $attributesArray = array();
+  foreach ($namespaces as $prefix => $namespace) {
+    foreach ($xml->attributes($namespace) as $attributeName => $attribute) {
+      //replace characters in attribute name
+      if ($options['keySearch']) {
+        $attributeName =
+          str_replace($options['keySearch'], $options['keyReplace'], $attributeName);
+      }
+      $attributeKey = $options['attributePrefix']
+        . ($prefix ? $prefix . $options['namespaceSeparator'] : '')
+        . $attributeName;
+      $attributesArray[$attributeKey] = (string) $attribute;
+    }
+  }
+
+  //get child nodes from all namespaces
+  $tagsArray = array();
+  foreach ($namespaces as $prefix => $namespace) {
+    foreach ($xml->children($namespace) as $childXml) {
+      //recurse into child nodes
+      $childArray = xmlToArray($childXml, $options);
+      list($childTagName, $childProperties) = each($childArray);
+
+      //replace characters in tag name
+      if ($options['keySearch']) {
+        $childTagName =
+          str_replace($options['keySearch'], $options['keyReplace'], $childTagName);
+      }
+      //add namespace prefix, if any
+      if ($prefix) {
+        $childTagName = $prefix . $options['namespaceSeparator'] . $childTagName;
+      }
+
+      if (!isset($tagsArray[$childTagName])) {
+        //only entry with this key
+        //test if tags of this type should always be arrays, no matter the element count
+        $tagsArray[$childTagName] =
+          in_array($childTagName, $options['alwaysArray']) || !$options['autoArray']
+            ? array($childProperties) : $childProperties;
+      }
+      elseif (
+        is_array($tagsArray[$childTagName]) && array_keys($tagsArray[$childTagName])
+        === range(0, count($tagsArray[$childTagName]) - 1)
+      ) {
+        //key already exists and is integer indexed array
+        $tagsArray[$childTagName][] = $childProperties;
+      }
+      else {
+        //key exists so convert to integer indexed array with previous value in position 0
+        $tagsArray[$childTagName] = array(
+          $tagsArray[$childTagName],
+          $childProperties
+        );
+      }
+    }
+  }
+
+  //get text content of node
+  $textContentArray = array();
+  $plainText = trim((string) $xml);
+  if ($plainText !== '') {
+    $textContentArray[$options['textContent']] = $plainText;
+  }
+
+  //stick it all together
+  $propertiesArray = !$options['autoText'] || $attributesArray || $tagsArray || ($plainText === '')
+    ? array_merge($attributesArray, $tagsArray, $textContentArray) : $plainText;
+
+  //return node as array
+  return array(
+    $xml->getName() => $propertiesArray
+  );
+}

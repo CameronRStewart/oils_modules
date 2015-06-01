@@ -1,0 +1,1805 @@
+<?php
+
+include('functions.php');
+
+/**
+ * @file
+ * A module that displays employee information.
+ */
+
+
+/**
+ *  Get employee information
+ *
+ * @return
+ *  A result set of employee information
+ */
+function get_staff_info() {
+
+  // Set db connection
+  db_set_active('remote');
+
+  // Execute query
+  $result = db_query('select e.id, e.first_name, e.middle_name, e.last_name, e.visible, e.email, e.rg_profile, e.picture, e.blurb, e.codhead, e.current_teach, e.ul_employee, e.oils_employee, e.cv_link, d.dept_id, d.dept, ed.emp2dept_id, b.box_id, b.room, b.telephone, eb.emp2box_id, l.loc_id, l.loc, r.rank, s.sub_id, s.sub, es.emp2subjects_id, w.websites_id, w.website, ew.emp2websites_id, res.research_id, res.research, eres.emp2research_id, t.title, ec.emp2classes_id, c.classes_id, c.classes
+ from {employee} e
+ left join ({dept} d, {emp2dept} ed)
+ on (e.id = ed.emp_id and ed.dept_id = d.dept_id)
+ left join ({box} b, {emp2box} eb, loc l)
+ on (e.id = eb.emp_id and eb.box_id = b.box_id
+ and b.loc_id = l.loc_id)
+ left join ({title} t, {emp2title} et)
+ on (e.id = et.emp_id and et.title_id = t.title_id)
+ left join ({subs} s, {emp2subjects} es)
+ on (e.id = es.emp_id and es.subjects_id = s.sub_id)
+ left join ({rank} r, {emp2rank} er)
+ on (e.id = er.emp_id and er.rank_id = r.rank_id)
+ left join ({websites} w, {emp2websites} ew) on (e.id = ew.emp_id and ew.websites_id = w.websites_id)
+ left join ({research} res, {emp2research} eres) on (e.id = eres.emp_id and eres.research_id = res.research_id)
+ left join ({classes} c, {emp2classes} ec) on (e.id = ec.emp_id and ec.classes_id = c.classes_id)
+ where e.visible = 1 and e.oils_employee = 1 order by last_name, first_name, middle_name'); //
+
+  // Revert to default db connection
+  db_set_active();
+
+  return $result;
+}
+
+
+/**
+ * Implements hook_help().
+ *
+ * Displays help and module information.
+ *
+ * @param path
+ *   Which path of the site we're using to display help
+ * @param arg
+ *   Array that holds the current path as returned from arg() function
+ * @return string
+ *   Content for the help page
+ */
+function staffdb_help($path, $arg) {
+  switch ($path) {
+    case "admin/help#staffdb":
+      return '<p>' . t("This module allows display and editing of employee information contained in an external database.") . '</p>';
+      break;
+  }
+}
+
+/**
+ * Implements hook_menu().
+ */
+function staffdb_menu() {
+  $items = array();
+  $items['admin/config/content/staffdb-import'] = array(
+    'title' => 'Employee Database Module: Import and Update Records',
+    'description' => 'Allows employee information to be imported or updated.',
+    'page callback' => 'import_update_employees',
+    'page arguments' => array(4),
+    'access arguments' => array('access administration pages'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  $items['about-oils/directory'] = array(
+    'type' => MENU_CALLBACK,
+    //'menu_name' => 'main-menu',
+    //'plid' => 407,
+    'title' => t('Faculty and Staff Directory'),
+    'description' => 'Contact Information for OILS Faculty and Staff',
+    'page callback' => 'staffdb_directory',
+    'access callback' => 'user_access',
+    'access arguments' => array('access content'),
+  );
+
+  return $items;
+}
+
+
+/**
+ * Page callback: Faculty and Staff Directory
+ */
+function staffdb_directory() {
+  $items = array();
+  $full_name = $rank = $title = $title_rank = $email = $location = $building = $room = $phone = "";
+
+  // Find all oils employees and load thier nodes
+  $query = db_select('node', 'n');
+  $query->fields('n', array('nid'));
+  $query->condition('type', 'employee');
+  $query->join('field_data_field_oils_employee', 'f', 'n.nid = f.entity_id');
+  $query->condition('f.field_oils_employee_value', '1');
+  $result = $query->execute()->fetchCol();
+  $nodes = node_load_multiple($result);
+
+  foreach ($nodes as $node) {
+    $full_name = l($node->title, drupal_get_path_alias("node/$node->nid"));
+    $rank = field_get_items('node', $node, 'field_faculty_rank');
+    $rank = taxonomy_term_load($rank[0]['tid'])->name;
+    $title = field_get_items('node', $node, 'field_job_title');
+    $title = taxonomy_term_load($title[0]['tid'])->name;
+    $title_rank = $rank;
+    $title_rank .= ($rank and $title) ? "<br/>" : "";
+    $title_rank .= $title;
+    $email = field_get_items('node', $node, 'field_email');
+    $email = l($email[0]['safe_value'], "mailto:".$email[0]['safe_value'], array('absolute' => TRUE));
+
+    $location = field_get_items('node', $node, 'field_physical_location');
+    if($location = node_load($location[0]['target_id'])) {
+      $loc = field_get_items('node', $location, 'field_location');
+      $building = taxonomy_term_load($loc[0]['tid'])->name;
+
+      $room = field_get_items('node', $location, 'field_room_number');
+      $room = $room[0]['value'];
+
+      $phone = field_get_items('node', $location, 'field_phone_number');
+      $phone = $phone[0]['value'];
+    }
+
+    $items[] = array(
+      'data' => array(
+        $full_name,
+        $title_rank,
+        $building . " ". $room,
+        $phone,
+        $email
+      ),
+    );
+
+    unset($full_name, $rank, $title, $title_rank, $email, $location, $building, $room, $phone);
+  }
+
+  $output = array(
+    'info' => array(
+      '#type' => 'markup',
+      '#prefix' => '<p>',
+      '#suffix' => '</p>'
+    ),
+    'table' => array(
+      '#theme' => 'table',
+    )
+  );
+
+  // No results.
+  if (empty($items)) {
+    $output['info']['#markup'] = t('No employee information available.');
+  }
+  else {
+    $output['table']['#header'] = array(
+      array('data' => t('Name')),
+      array('data' => t('Title/Rank')),
+      array('data' => t('Office')),
+      array('data' => t('Phone')),
+      array('data' => t('Email')),
+    );
+    $output['table']['#rows'] = $items;
+  }
+
+  return $output;
+}
+
+
+
+/**
+ * Page callback: staffdb import/update
+ *
+ * @see staffdb_menu()
+ */
+function staffdb_import_form($form, &$form_state) {
+  $form['submit'][] = array(
+    '#type' => 'submit',
+    '#value' => t('Begin Import/Update'),
+    '#submit' => array('import_update_employees'),
+    '#prefix' => '<p>Click button to begin import/update of employee information.</p>',
+  );
+  $form['start_staff_import_process'] = array(
+    '#type' => 'hidden',
+    '#value' => '1'
+  );
+
+  return system_settings_form($form);
+}
+
+function import_update_employees($args = NULL) {
+  if (isset($args) && $args == "begin") {
+    $results_text = start_import_update_employees();
+    if (!isset($results_text) || empty($results_text)) {
+      $results_text = "Employee information updated";
+    }
+    return array(
+      '#markup' => t('<p>@results_text</p>', array(
+        '@args' => $args,
+        '@results_text' => $results_text
+      )),
+    );
+  }
+  return array(
+    '#markup' => t('<p>args: @args</p><p>Click the button below to begin import/update of employee information.</p><p><a href="/admin/config/content/staffdb-import/begin">Begin</a></p>', array('@args' => $args)),
+  );
+}
+
+function start_import_update_employees() {
+  $result = get_staff_info();
+  $massaged_result = massage_employee_data($result);
+  $results_add_update = make_update_employee_content_type($massaged_result);
+  $results_remove = delete_employee($massaged_result);
+
+  if (!empty($results_add_update)) {
+    $updated_list = implode(', ', $results_add_update);
+    drupal_set_message(t("Updated employee(s): @updated_list.", array('@updated_list' => $updated_list)), 'status');
+  }
+
+  if (!empty($results_remove)) {
+    $deleted_list = implode(', ', $results_remove);
+    drupal_set_message(t("Removed from employee list: @deleted_list.", array('@deleted_list' => $deleted_list)), 'status');
+  }
+
+  $results_text = "";
+  return $results_text;
+}
+
+function delete_employee($input) {
+  global $user;
+  if ($user->uid == "0") {
+    $user = user_load(1);
+  }
+  // Pull all employee nids into array to check against
+  $nid_list_q = db_query('select nid, field_remote_id_value from {node} n, {field_data_field_remote_id} f where n.type = \'employee\' and n.nid = f.entity_id');
+  foreach ($nid_list_q as $nline) {
+    $nid_list["$nline->field_remote_id_value"] = $nline->nid;
+  }
+  $employees_deleted = array();
+  // Remove records that are in $input
+  foreach ($input as $emp_id => $emp) {
+    /*
+    $node1 = dsm($emp);
+    drupal_set_message(t('%a', array('%a' => $node1)));
+    */
+    if (isset($emp["id"]) && is_numeric($emp["id"])) {
+      if (array_key_exists($emp["id"], $nid_list)) { // Employee still exists, remove from list
+        unset($nid_list[$emp["id"]]);
+      } else {
+        $employees_deleted[] = $emp["first_name"] . " " . $emp["middle_name"] . " " . $emp["last_name"];
+      }
+    }
+  }
+  // If any entries remain, they need to be deleted
+  if (!empty($nid_list)) {
+    foreach ($nid_list as $key => $nid) {
+      if (is_numeric($nid)) {
+        $node = entity_metadata_wrapper('node', $nid);
+        $loc = $node->field_physical_location->value();
+        $loc_nid = $loc[0]->nid;
+        if (isset($loc_nid) && is_numeric($loc_nid)) {
+          node_delete($loc_nid);
+        }
+        node_delete($nid);
+      }
+    }
+  }
+  return $employees_deleted;
+}
+
+function make_update_employee_content_type($input) {
+  if (isset($input) && is_array($input) && !empty($input)) {
+    foreach ($input as $emp_id => $emp) {
+      $return = array();
+      if (isset($emp_id) && is_numeric($emp_id)) {
+        $return['field_remote_id'] = $emp_id;
+      }
+      if (isset($emp['title']) && $emp['title'] != "") {
+        $return['field_job_title'] = $emp['title'];
+      }
+      if (isset($emp['first_name']) && $emp['first_name'] != "") {
+        $return['field_first_name'] = $emp['first_name'];
+      }
+      if (isset($emp['middle_name']) && $emp['middle_name'] != "") {
+        $return['field_middle_name'] = $emp['middle_name'];
+      }
+      if (isset($emp['last_name']) && $emp['last_name'] != "") {
+        $return['field_last_name'] = $emp['last_name'];
+      }
+      if (isset($emp['email']) && $emp['email'] != "") {
+        $return['field_email'] = $emp['email'];
+      }
+      if (isset($emp['blurb']) && $emp['blurb'] != "") {
+        $return['body'] = $emp['blurb'];
+      }
+      if (isset($emp['visible']) && $emp['visible'] != "") {
+        $return['field_visible'] = $emp['visible'];
+      }
+      if (isset($emp['rg_profile']) && $emp['rg_profile'] != "") {
+        $return['field_research_guide_profile'] = $emp['rg_profile'];
+      }
+      if (isset($emp['picture']) && $emp['picture'] != "") {
+        $return['field_picture'] = $emp['picture'];
+      }
+      if (isset($emp['rank']) && $emp['rank'] != "") {
+        $return['field_faculty_rank'] = $emp['rank'];
+      }
+      if (isset($emp['website']) && $emp['website'] != "") {
+        $return['field_web_sites'] = $emp['website'];
+      }
+      if (isset($emp['codhead']) && $emp['codhead'] != "") {
+        $return['field_dean_s_cabinet_member'] = $emp['codhead'];
+      }
+      if (isset($emp['currently_teaching']) && $emp['currently_teaching'] != "") {
+        $return['field_currently_teaching'] = $emp['currently_teaching'];
+      }
+      if (isset($emp['ul_employee']) && $emp['ul_employee'] != "") {
+        $return['field_ul_employee'] = $emp['ul_employee'];
+      }
+      if (isset($emp['oils_employee']) && $emp['oils_employee'] != "") {
+        $return['field_oils_employee'] = $emp['oils_employee'];
+      }
+      if (isset($emp['cv_link']) && $emp['cv_link'] != "") {
+        $return['field_cv_link'] = $emp['cv_link'];
+      }
+      if (isset($emp['dept']) && $emp['dept'] != "") {
+        $return['dept'] = $emp['dept'];
+      }
+      if (isset($emp['box_id']) && !empty($emp['box_id'])) {
+        $return['box_id'] = $emp['box_id'];
+      }
+      if (isset($emp['subjects']) && !empty($emp['subjects'])) {
+        $return['subjects'] = $emp['subjects'];
+      }
+      if (isset($emp['classes']) && !empty($emp['classes'])) {
+        $return['classes'] = $emp['classes'];
+      }
+      if (isset($emp['research']) && !empty($emp['research'])) {
+        $return['research'] = $emp['research'];
+      }
+
+      // Check location(s) to see if they need to be created or updated, return array of vids
+      if (isset($return['box_id']) && !empty($return['box_id'])) {
+        $location_vids = check_locations($return['box_id'], $return['field_remote_id']);
+      }
+
+      // Use employee info, create/update/delete as necessary
+      $outcome = check_employee($return, $location_vids);
+    }
+  }
+  else {
+    // If employee array is empty, inform.
+  }
+
+  return $outcome;
+}
+
+function check_employee($input, $location_vids) {
+  global $user;
+  if ($user->uid == "0") {
+    $user = user_load(1);
+  }
+
+  $field_val = $input["field_remote_id"];
+  $query = new EntityFieldQuery;
+
+  $result = $query
+    ->entityCondition('entity_type', 'node')
+    ->fieldCondition('field_remote_id', 'value', $field_val, '=')
+    ->execute();
+
+  foreach ($result as $val => $trash) {
+    foreach ($trash as $val2 => $trash2) {
+      $node_id = $trash2->nid;
+    }
+  }
+/*  $wrap2 = entity_metadata_wrapper('node', $node_id);
+  $node2 = dsm($node_id);
+  drupal_set_message(t('%n', array('%n' => $node2)));
+*/
+  if (isset($node_id) && is_numeric($node_id)) {
+    $wrapper = entity_metadata_wrapper('node', $node_id);
+  }
+  else {
+    $values = array(
+      'type' => 'employee',
+      'uid' => $user->uid,
+      'status' => 1,
+      'comment' => 0,
+      'promote' => 0,
+    );
+    $entity = entity_create('node', $values);
+    $wrapper = entity_metadata_wrapper('node', $entity);
+  }
+  // Set all values
+  if (isset($input["field_remote_id"]) && !empty($input["field_remote_id"])) {
+    $wrapper->field_remote_id->set($input["field_remote_id"]);
+  }
+  else {
+    $wrapper->field_remote_id->set(NULL);
+  }
+  $title_text = "";
+  if (isset($input["field_first_name"]) && !empty($input["field_first_name"])) {
+    $wrapper->field_first_name->set($input["field_first_name"]);
+    $title_text .= $input["field_first_name"];
+  }
+  else {
+    $wrapper->field_first_name->set(NULL);
+  }
+  if (isset($input["field_middle_name"]) && !empty($input["field_middle_name"])) {
+    $wrapper->field_middle_name->set($input["field_middle_name"]);
+    $title_text .= " " . $input["field_middle_name"];
+  }
+  else {
+    $wrapper->field_middle_name->set(NULL);
+  }
+  if (isset($input["field_last_name"]) && !empty($input["field_last_name"])) {
+    $wrapper->field_last_name->set($input["field_last_name"]);
+    $title_text .= " " . $input["field_last_name"];
+  }
+  else {
+    $wrapper->field_last_name->set(NULL);
+  }
+  if (isset($title_text) && !empty($title_text)) {
+    $wrapper->title->set($title_text);
+  }
+  else {
+    $wrapper->title->set("No Name Provided");
+  }
+  if (isset($input["field_email"]) && !empty($input["field_email"])) {
+    $wrapper->field_email->set($input["field_email"]);
+  }
+  else {
+    $wrapper->field_email->set(NULL);
+  }
+  if (isset($input["field_visible"]) && !empty($input["field_visible"])) {
+    $wrapper->field_visible->set($input["field_visible"]);
+  }
+  else {
+    $wrapper->field_visible->set(NULL);
+  }
+  if (isset($input["field_research_guide_profile"]) && !empty($input["field_research_guide_profile"])) {
+    $wrapper->field_research_guide_profile->set($input["field_research_guide_profile"]);
+  }
+  else {
+    $wrapper->field_research_guide_profile->set(NULL);
+  }
+  if (isset($input["field_picture"]) && !empty($input["field_picture"])) {
+    $wrapper->field_picture->set($input["field_picture"]);
+  }
+  else {
+    $wrapper->field_picture->set(NULL);
+  }
+  if (isset($input["field_dean_s_cabinet_member"]) && !empty($input["field_dean_s_cabinet_member"])) {
+    $wrapper->field_dean_s_cabinet_member->set($input["field_dean_s_cabinet_member"]);
+  }
+  else {
+    $wrapper->field_dean_s_cabinet_member->set(NULL);
+  }
+  if (isset($input["field_currently_teaching"]) && !empty($input["field_currently_teaching"])) {
+    $wrapper->field_currently_teaching->set($input["field_currently_teaching"]);
+  }
+  else {
+    $wrapper->field_currently_teaching->set(NULL);
+  }
+  if (isset($input["field_ul_employee"]) && !empty($input["field_ul_employee"])) {
+    $wrapper->field_ul_employee->set($input["field_ul_employee"]);
+  }
+  else {
+    $wrapper->field_ul_employee->set(NULL);
+  }
+  if (isset($input["field_oils_employee"]) && !empty($input["field_oils_employee"])) {
+    $wrapper->field_oils_employee->set($input["field_oils_employee"]);
+  }
+  else {
+    $wrapper->field_oils_employee->set(NULL);
+  }
+  if (isset($input["field_cv_link"]) && !empty($input["field_cv_link"])) {
+    $wrapper->field_cv_link->set($input["field_cv_link"]);
+  }
+  else {
+    $wrapper->field_cv_link->set(NULL);
+  }
+  if (isset($input["body"]) && !empty($input["body"])) {
+    $wrapper->body->value->set($input['body']);
+    $wrapper->body->format = "full_html";
+  }
+  else {
+    $wrapper->body->value->set(NULL);
+  }
+
+  // TAXONOMY TERM REFERENCES ==>> NEEDS CHECK TO DETERMINE TID(S)
+  if (isset($input["field_job_title"]) && !empty($input["field_job_title"])) {
+    // Get vid to check against
+    $jt_vid_q = db_query('select vid, name from {taxonomy_vocabulary} t where t.name = \'Job Title\'');
+    foreach ($jt_vid_q as $jt_vline) {
+      $jt_vid = $jt_vline->vid;
+    }
+
+    // Create an array to test values against
+    $jt_result = taxonomy_get_tree($jt_vid, $parent = 0, $max_depth = NULL, $load_entities = FALSE);
+    foreach ($jt_result as $jt_line) {
+      $jt_array["$jt_line->name"] = $jt_line->tid;
+    }
+
+    // Check against current values
+    if (!isset($jt_array[$input["field_job_title"]]) || !is_numeric($jt_array[$input["field_job_title"]])) {
+      $jt_tid = insert_tax_tid($jt_vid, $input["field_job_title"], 'taxonomy_term');
+    }
+    else {
+      $jt_tid = $jt_array[$input["field_job_title"]];
+    }
+  }
+  else {
+    $jt_tid = NULL;
+  }
+  $wrapper->field_job_title->set($jt_tid);
+
+  if (isset($input["field_faculty_rank"]) && !empty($input["field_faculty_rank"])) {
+    // Get vid to check against
+    $fr_vid_q = db_query('select vid, name from {taxonomy_vocabulary} t where t.name = \'Rank\'');
+    foreach ($fr_vid_q as $fr_vline) {
+      $fr_vid = $fr_vline->vid;
+    }
+
+    // Create an array to test values against
+    $fr_result = taxonomy_get_tree($fr_vid, $parent = 0, $max_depth = NULL, $load_entities = FALSE);
+    foreach ($fr_result as $fr_line) {
+      $fr_array["$fr_line->name"] = $fr_line->tid;
+    }
+
+    // Check against current values
+    if (!isset($fr_array[$input["field_faculty_rank"]]) || !is_numeric($fr_array[$input["field_faculty_rank"]])) {
+      $fr_tid = insert_tax_tid($fr_vid, $input["field_faculty_rank"], 'taxonomy_term');
+    }
+    else {
+      $fr_tid = $fr_array[$input["field_faculty_rank"]];
+    }
+  }
+  else {
+    $fr_tid = NULL;
+  }
+  $wrapper->field_faculty_rank->set($fr_tid);
+
+  // Multi-value fields need handled a little differently
+  if (isset($input["dept"]) && !empty($input["dept"])) {
+    // Get vid to check against
+    $d_vid_q = db_query('select vid, name from {taxonomy_vocabulary} t where t.name = \'Department\'');
+    foreach ($d_vid_q as $d_vline) {
+      $d_vid = $d_vline->vid;
+    }
+
+    // Check against current values
+    $d_tid = array();
+    $refresh = 1;
+    foreach ($input["dept"] as $key => $d_val) {
+      if ($refresh == 1) {
+        $d_array = get_tids($d_vid);
+        $refresh = 0;
+      }
+      if (!isset($d_array[$d_val]) || !is_numeric($d_array[$d_val])) {
+        $d_tid[] = insert_tax_tid($d_vid, $d_val, 'taxonomy_term');
+        $refresh = 1;
+      }
+      else {
+        $d_tid[] = $d_array[$d_val];
+      }
+    }
+  }
+  else {
+    $d_tid[] = NULL;
+  }
+  $d_tid = array_unique($d_tid);
+  $wrapper->field_department->set($d_tid);
+
+  if (isset($input["subjects"]) && !empty($input["subjects"])) {
+    // Get vid to check against
+    $s_vid_q = db_query('select vid, name from {taxonomy_vocabulary} t where t.name = \'Subjects\'');
+    foreach ($s_vid_q as $s_vline) {
+      $s_vid = $s_vline->vid;
+    }
+
+    // Check against current values
+    $s_tid = array();
+    $refresh = 1;
+    foreach ($input["subjects"] as $key => $sub_val) {
+      if ($refresh == 1) {
+        $s_array = get_tids($s_vid);
+        $refresh = 0;
+      }
+      if (!isset($s_array[$sub_val]) || !is_numeric($s_array[$sub_val])) {
+        $s_tid[] = insert_tax_tid($s_vid, $sub_val, 'taxonomy_term');
+        $refresh = 1;
+      }
+      else {
+        $s_tid[] = $s_array[$sub_val];
+      }
+    }
+  }
+  else {
+    $s_tid[] = NULL;
+  }
+  $s_tid = array_unique($s_tid);
+  $wrapper->field_subjects->set($s_tid);
+
+  if (isset($input["classes"]) && !empty($input["classes"])) {
+    // Get vid to check against
+    $c_vid_q = db_query('select vid, name from {taxonomy_vocabulary} t where t.name = \'Classes\'');
+    foreach ($c_vid_q as $c_vline) {
+      $c_vid = $c_vline->vid;
+    }
+
+    // Create an array to test values against
+    $c_result = taxonomy_get_tree($c_vid, $parent = 0, $max_depth = NULL, $load_entities = FALSE);
+    foreach ($c_result as $c_line) {
+      $c_array["$c_line->name"] = $c_line->tid;
+    }
+
+    // Check against current values
+    $c_tid = array();
+    $refresh = 1;
+    foreach ($input["classes"] as $key => $classes_val) {
+      if ($refresh == 1) {
+        $c_array = get_tids($c_vid);
+        $refresh = 0;
+      }
+      if (!isset($c_array[$classes_val]) || !is_numeric($c_array[$classes_val])) {
+        $c_tid[] = insert_tax_tid($c_vid, $classes_val, 'taxonomy_term');
+        $refresh = 1;
+      }
+      else {
+        $c_tid[] = $c_array[$classes_val];
+      }
+    }
+  }
+  else {
+    $c_tid[] = NULL;
+  }
+  $c_tid = array_unique($c_tid);
+  $wrapper->field_classes->set($c_tid);
+
+  if (isset($input["research"]) && !empty($input["research"])) {
+    // Get vid to check against
+    $r_vid_q = db_query('select vid, name from {taxonomy_vocabulary} t where t.name = \'Research Interests\'');
+    foreach ($r_vid_q as $r_vline) {
+      $r_vid = $r_vline->vid;
+    }
+
+    // Check against current values
+    $r_tid = array();
+    $refresh = 1;
+    foreach ($input["research"] as $key => $research_val) {
+      if ($refresh == 1) {
+        $r_array = get_tids($r_vid);
+        $refresh = 0;
+      }
+      if (!isset($r_array[$research_val]) || !is_numeric($r_array[$research_val])) {
+        $r_tid[] = insert_tax_tid($r_vid, $research_val, 'taxonomy_term');
+        $refresh = 1;
+      }
+      else {
+        $r_tid[] = $r_array[$research_val];
+      }
+    }
+  }
+  else {
+    $r_tid[] = NULL;
+  }
+  $r_tid = array_unique($r_tid);
+  $wrapper->field_research_interests->set($r_tid);
+
+  if (isset($input["field_web_sites"]) && !empty($input["field_web_sites"])) {
+    // Get vid to check against
+    $w_vid_q = db_query('select vid, name from {taxonomy_vocabulary} t where t.name = \'Web Sites\'');
+    foreach ($w_vid_q as $w_vline) {
+      $w_vid = $w_vline->vid;
+    }
+
+    // Check against current values
+    $w_tid = array();
+    $refresh = 1;
+    foreach ($input["field_web_sites"] as $key => $website_val) {
+      if ($refresh == 1) {
+        $w_array = get_tids($w_vid);
+        $refresh = 0;
+      }
+      if (!isset($w_array[$website_val]) || !is_numeric($w_array[$website_val])) {
+        $w_tid[] = insert_tax_tid($w_vid, $website_val, 'taxonomy_term');
+        $refresh = 1;
+      }
+      else {
+        $w_tid[] = $w_array[$website_val];
+      }
+    }
+  }
+  else {
+    $w_tid[] = NULL;
+  }
+  $w_tid = array_unique($w_tid);
+  $wrapper->field_web_sites->set($w_tid);
+
+  if (isset($location_vids) && is_array($location_vids)) {
+    $wrapper->field_physical_location->set($location_vids[0]);
+  }
+
+  // Save edits or new node
+  $wrapper->save();
+}
+
+function get_tids($vid) {
+  // Set up variable
+  $array = array();
+  // Create an array to test values against
+  $result = taxonomy_get_tree($vid, $parent = 0, $max_depth = NULL, $load_entities = FALSE);
+  foreach ($result as $line) {
+    $array["$line->name"] = $line->tid;
+  }
+  return $array;
+}
+
+function check_locations($input, $remote_id) {
+  global $user;
+  if ($user->uid == "0") {
+    $user = user_load(1);
+  }
+  // Pull all building locations into structure to check against
+  $vid_q = db_query('select vid, name from {taxonomy_vocabulary} t where t.name = \'Location\'');
+  foreach ($vid_q as $vline) {
+    $vid = $vline->vid;
+  }
+
+  // Create an array to test location values against
+  $loc_result = taxonomy_get_tree($vid, $parent = 0, $max_depth = NULL, $load_entities = FALSE);
+  foreach ($loc_result as $locline) {
+    $loc_array["$locline->name"] = $locline->tid;
+  }
+
+  // Get list of current employee_location node IDs, titles
+  $elnodes = db_query('select nid, title from {node} n where n.type = \'employee_location\'');
+  $emp_loc_nodes = array();
+  foreach ($elnodes as $rec) {
+    $emp_loc_nodes[$rec->title] = $rec->nid;
+  }
+
+  $location_vids = array();
+  foreach ($input as $box_id => $box_info) {
+    //  Does the branch/location exist?
+    if (isset($box_info['loc']) && !empty($box_info['loc'])) {
+      if (!isset($loc_array[$box_info['loc']])) {
+        $tid = insert_tax_tid($vid, $box_info['loc'], 'taxonomy_term');
+      }
+      else {
+        $tid = $loc_array[$box_info['loc']];
+      }
+    }
+
+    // Does the location group exist?
+    if (isset($remote_id) && is_numeric($remote_id)) {
+      if (isset($emp_loc_nodes[$remote_id])) {
+        $loc_vid = $emp_loc_nodes[$remote_id];
+      }
+      else {
+        $loc_vid = NULL;
+      }
+      $location_nids[] = insert_update_location_node($box_info, $remote_id, $tid, $loc_vid);
+    }
+  }
+  return $location_nids;
+}
+
+// Creates employee_location instance, returns vid of node
+// With $vid, checks to see if node needs updated
+function insert_update_location_node($box_info, $remote_id, $tid, $vid = NULL) {
+  global $user;
+  if ($user->uid == "0") {
+    $user = user_load(1);
+  }
+
+  if (isset($vid) && !empty($vid)) { // TODO: test if values have changed, only update if yes
+    // UPDATE instead of create
+    $existing_location = entity_metadata_wrapper('node', $vid);
+    if (isset($box_info['room']) && !empty($box_info['room'])) {
+      $existing_location->field_room_number->set($box_info['room']);
+    }
+    else {
+      $existing_location->field_room_number->set(NULL);
+    }
+    if (isset($box_info['telephone']) && !empty($box_info['telephone'])) {
+      $existing_location->field_phone_number->set($box_info['telephone']);
+    }
+    else {
+      $existing_location->field_phone_number->set(NULL);
+    }
+    if (isset($tid) && !empty($tid)) {
+      $existing_location->field_location->set($tid);
+    }
+    else {
+      $existing_location->field_location->set(NULL);
+    }
+    $existing_location->save();
+    $location_id = $existing_location->nid->value();
+  }
+  else {
+    $values = array(
+      'type' => 'employee_location',
+      'uid' => $user->uid,
+      'status' => 1,
+      'comment' => 0,
+      'promote' => 0,
+    );
+    $entity = entity_create('node', $values);
+    $wrapper = entity_metadata_wrapper('node', $entity);
+    if (isset($box_info['room']) && !empty($box_info['room'])) {
+      $wrapper->field_room_number->set($box_info['room']);
+    }
+    if (isset($box_info['telephone']) && !empty($box_info['telephone'])) {
+      $wrapper->field_phone_number->set($box_info['telephone']);
+    }
+    if (isset($tid) && !empty($tid)) {
+      $wrapper->field_location->set($tid);
+    }
+    else {
+      $wrapper->field_location->set(NULL);
+    }
+    $wrapper->title->set($remote_id);
+    $wrapper->save();
+    $location_id = $wrapper->nid->value();
+  }
+  return $location_id;
+}
+
+function insert_tax_tid($vid, $term, $term_type) {
+  global $user;
+  if ($user->uid == "0") {
+    $user = user_load(1);
+  }
+  // CREATE new
+  $values = array(
+    'name' => $term,
+    'vid' => $vid,
+  );
+  $entity = entity_create($term_type, $values);
+  $wrapper = entity_metadata_wrapper($term_type, $entity);
+  $wrapper->save();
+
+  return $wrapper->tid->value();
+}
+
+// Check whether user is admin or is trying to update own record
+function check_update_rights($node) {
+  global $user;
+  if ($user->uid == "0") {
+    $user = user_load(1);
+  }
+  $update_rights = array();
+
+  // Get user's email, cut off @... == NetID
+  if ($node->type == 'employee') {
+    if ($node->field_email['und'][0]['value']) {
+      $netid_string = substr($node->field_email['und'][0]['value'], 0, strpos($node->field_email['und'][0]['value'], '@'));
+    }
+  }
+  elseif ($node->type == 'employee_location') {
+    $title = $node->title;
+    // Get employee node with remote_id of $title
+    $query = new EntityFieldQuery();
+    $e_node_r = $query->entityCondition('entity_type', 'node')
+      ->fieldCondition('field_remote_id', 'value', $title)
+      ->execute();
+    if ($e_node_r != NULL) {
+      $e_node = entity_metadata_wrapper('node', key($e_node_r['node']));
+      $field_email = $e_node->field_email->value();
+      $netid_string = substr($field_email, 0, strpos($field_email, '@'));
+    }
+  }
+
+  // Get logged-in username
+  if (isset($user->mail)) {
+    $user_email_string = substr($user->mail, 0, strpos($user->mail, '@'));
+  }
+
+  // Test username same as NetID
+  if (isset($user_email_string) && isset($netid_string) && $user_email_string == $netid_string) {
+    $update_rights['user'] = 'true';
+  } else {
+    $update_rights['user'] = 'false';
+  }
+
+  if ($user->roles) {
+    if (in_array('administrator', $user->roles)) {
+      $update_rights['admin'] = 'true';
+    } else {
+      $update_rights['admin'] = 'false';
+    }
+  }
+  return $update_rights;
+}
+
+// Intercept the node save/create to update the remote db first
+/**
+ * @file
+ * Updates external employee database.
+ */
+/**
+ * Implements hook_node_presave().
+ */
+
+function staffdb_node_presave($node) {
+  global $user;
+  if ($user->uid == "0") {
+    $user = user_load(1);
+  }
+
+  // Check whether user is admin or is trying to update own record
+  $update_rights = check_update_rights($node);
+
+  // For now, node must exist (was imported from employee db already);
+  // this means data can only be updated, not created
+  if ($node->type == 'employee' && isset($node->nid) && ($update_rights['admin'] == 'true' || $update_rights['user'] == 'true')) {
+    // Create empty array to hold changed values: if not empty at end, update
+    $emp_base_change = array();
+    $node_title = "";
+    //First gather changes in base table
+    if ($node->field_remote_id) {
+      $remote_id = $node->field_remote_id['und'][0]['value'];
+    }
+    if (isset($node->field_first_name['und'][0]['value']) || isset($node->original->field_first_name['und'][0]['value'])) {
+      if (isset($node->field_first_name['und'][0]['value']) && isset($node->original->field_first_name['und'][0]['value']) && ($node->field_first_name['und'][0]['value'] != $node->original->field_first_name['und'][0]['value'])) {
+        $emp_base_change['first_name'] = $node->field_first_name['und'][0]['value'];
+        $node_title .= $node->field_first_name['und'][0]['value'];
+      } elseif (isset($node->field_first_name['und'][0]['value']) && isset($node->original->field_first_name['und'][0]['value']) && ($node->field_first_name['und'][0]['value'] == $node->original->field_first_name['und'][0]['value'])) {
+        $node_title .= $node->field_first_name['und'][0]['value'];
+      }
+      elseif (isset($node->field_first_name['und'][0]['value']) && !isset($node->original->field_first_name['und'][0]['value'])) {
+        $emp_base_change['first_name'] = $node->field_first_name['und'][0]['value'];
+        $node_title .= $node->field_first_name['und'][0]['value'];
+      }
+      elseif (!isset($node->field_first_name['und'][0]['value']) && isset($node->original->field_first_name['und'][0]['value'])) {
+        $emp_base_change['first_name'] = "";
+      }
+    }
+    if (isset($node->field_middle_name['und'][0]['value']) || isset($node->original->field_middle_name['und'][0]['value'])) {
+      if (isset($node->field_middle_name['und'][0]['value']) && isset($node->original->field_middle_name['und'][0]['value']) && ($node->field_middle_name['und'][0]['value'] != $node->original->field_middle_name['und'][0]['value'])) {
+        $emp_base_change['middle_name'] = $node->field_middle_name['und'][0]['value'];
+        $node_title .= " " . $node->field_middle_name['und'][0]['value'];
+      } elseif (isset($node->field_middle_name['und'][0]['value']) && isset($node->original->field_middle_name['und'][0]['value']) && ($node->field_middle_name['und'][0]['value'] == $node->original->field_middle_name['und'][0]['value'])) {
+        $node_title .= " " . $node->field_middle_name['und'][0]['value'];
+      }
+      elseif (isset($node->field_middle_name['und'][0]['value']) && !isset($node->original->field_middle_name['und'][0]['value'])) {
+        $emp_base_change['middle_name'] = $node->field_middle_name['und'][0]['value'];
+        $node_title .= " " . $node->field_middle_name['und'][0]['value'];
+      }
+      elseif (!isset($node->field_middle_name['und'][0]['value']) && isset($node->original->field_middle_name['und'][0]['value'])) {
+        $emp_base_change['middle_name'] = "";
+      }
+    }
+    if (isset($node->field_last_name['und'][0]['value']) || isset($node->original->field_last_name['und'][0]['value'])) {
+      if (isset($node->field_last_name['und'][0]['value']) && isset($node->original->field_last_name['und'][0]['value']) && ($node->field_last_name['und'][0]['value'] != $node->original->field_last_name['und'][0]['value'])) {
+        $emp_base_change['last_name'] = $node->field_last_name['und'][0]['value'];
+        $node_title .= " " . $node->field_last_name['und'][0]['value'];
+      } elseif (isset($node->field_last_name['und'][0]['value']) && isset($node->original->field_last_name['und'][0]['value']) && ($node->field_last_name['und'][0]['value'] == $node->original->field_last_name['und'][0]['value'])) {
+        $node_title .= " " . $node->field_last_name['und'][0]['value'];
+      }
+      elseif (isset($node->field_last_name['und'][0]['value']) && !isset($node->original->field_last_name['und'][0]['value'])) {
+        $emp_base_change['last_name'] = $node->field_last_name['und'][0]['value'];
+        $node_title .= " " . $node->field_last_name['und'][0]['value'];
+      }
+      elseif (!isset($node->field_last_name['und'][0]['value']) && isset($node->original->field_last_name['und'][0]['value'])) {
+        $emp_base_change['last_name'] = "";
+      }
+    }
+    if ($node->title && $node_title && ($node->title != $node_title)) {
+      $node->title = $node_title;
+    }
+    if (isset($node->field_email['und'][0]['value']) || isset($node->original->field_email['und'][0]['value'])) {
+      if (isset($node->field_email['und'][0]['value']) && isset($node->original->field_email['und'][0]['value']) && ($node->field_email['und'][0]['value'] != $node->original->field_email['und'][0]['value'])) {
+        $emp_base_change['email'] = $node->field_email['und'][0]['value'];
+      }
+      elseif (isset($node->field_email['und'][0]['value']) && !isset($node->original->field_email['und'][0]['value'])) {
+        $emp_base_change['email'] = $node->field_email['und'][0]['value'];
+      }
+      elseif (!isset($node->field_email['und'][0]['value']) && isset($node->original->field_email['und'][0]['value'])) {
+        $emp_base_change['email'] = "";
+      }
+    }
+    if (isset($node->field_research_guide_profile['und'][0]['value']) || isset($node->original->field_research_guide_profile['und'][0]['value'])) {
+      if (isset($node->field_research_guide_profile['und'][0]['value']) && isset($node->original->field_research_guide_profile['und'][0]['value']) && ($node->field_research_guide_profile['und'][0]['value'] != $node->original->field_research_guide_profile['und'][0]['value'])) {
+        $emp_base_change['rg_profile'] = $node->field_research_guide_profile['und'][0]['value'];
+      }
+      elseif (isset($node->field_research_guide_profile['und'][0]['value']) && !isset($node->original->field_research_guide_profile['und'][0]['value'])) {
+        $emp_base_change['rg_profile'] = $node->field_research_guide_profile['und'][0]['value'];
+      }
+      elseif (!isset($node->field_research_guide_profile['und'][0]['value']) && isset($node->original->field_research_guide_profile['und'][0]['value'])) {
+        $emp_base_change['rg_profile'] = "";
+      }
+    }
+    if (isset($node->field_picture['und'][0]['value']) || isset($node->original->field_picture['und'][0]['value'])) {
+      if (isset($node->field_picture['und'][0]['value']) && isset($node->original->field_picture['und'][0]['value']) && ($node->field_picture['und'][0]['value'] != $node->original->field_picture['und'][0]['value'])) {
+        $emp_base_change['picture'] = $node->field_picture['und'][0]['value'];
+      }
+      elseif (isset($node->field_picture['und'][0]['value']) && !isset($node->original->field_picture['und'][0]['value'])) {
+        $emp_base_change['picture'] = $node->field_picture['und'][0]['value'];
+      }
+      elseif (!isset($node->field_picture['und'][0]['value']) && isset($node->original->field_picture['und'][0]['value'])) {
+        $emp_base_change['picture'] = "";
+      }
+    }
+    if (isset($node->field_cv_link['und'][0]['value']) || isset($node->original->field_cv_link['und'][0]['value'])) {
+      if (isset($node->field_cv_link['und'][0]['value']) && isset($node->original->field_cv_link['und'][0]['value']) && ($node->field_cv_link['und'][0]['value'] != $node->original->field_cv_link['und'][0]['value'])) {
+        $emp_base_change['cv_link'] = $node->field_cv_link['und'][0]['value'];
+      }
+      elseif (isset($node->field_cv_link['und'][0]['value']) && !isset($node->original->field_cv_link['und'][0]['value'])) {
+        $emp_base_change['cv_link'] = $node->field_cv_link['und'][0]['value'];
+      }
+      elseif (!isset($node->field_cv_link['und'][0]['value']) && isset($node->original->field_cv_link['und'][0]['value'])) {
+        $emp_base_change['cv_link'] = "";
+      }
+    }
+    if (isset($node->field_visible['und'][0]['value']) || isset($node->original->field_visible['und'][0]['value'])) {
+      if (isset($node->field_visible['und'][0]['value']) && isset($node->original->field_visible['und'][0]['value']) && ($node->field_visible['und'][0]['value'] != $node->original->field_visible['und'][0]['value'])) {
+        $emp_base_change['visible'] = $node->field_visible['und'][0]['value'];
+      }
+      elseif (isset($node->field_visible['und'][0]['value']) && !isset($node->original->field_visible['und'][0]['value'])) {
+        $emp_base_change['visible'] = $node->field_visible['und'][0]['value'];
+      }
+      elseif (!isset($node->field_visible['und'][0]['value']) && isset($node->original->field_visible['und'][0]['value'])) {
+        $emp_base_change['visible'] = "0";
+      }
+    }
+    if (isset($node->field_dean_s_cabinet_member['und'][0]['value']) || isset($node->original->field_dean_s_cabinet_member['und'][0]['value'])) {
+      if (isset($node->field_dean_s_cabinet_member['und'][0]['value']) && isset($node->original->field_dean_s_cabinet_member['und'][0]['value']) && ($node->field_dean_s_cabinet_member['und'][0]['value'] != $node->original->field_dean_s_cabinet_member['und'][0]['value'])) {
+        $emp_base_change['codhead'] = $node->field_dean_s_cabinet_member['und'][0]['value'];
+      }
+      elseif (isset($node->field_dean_s_cabinet_member['und'][0]['value']) && !isset($node->original->field_dean_s_cabinet_member['und'][0]['value'])) {
+        $emp_base_change['codhead'] = $node->field_dean_s_cabinet_member['und'][0]['value'];
+      }
+      elseif (!isset($node->field_dean_s_cabinet_member['und'][0]['value']) && isset($node->original->field_dean_s_cabinet_member['und'][0]['value'])) {
+        $emp_base_change['codhead'] = "0";
+      }
+    }
+    if (isset($node->field_currently_teaching['und'][0]['value']) || isset($node->original->field_currently_teaching['und'][0]['value'])) {
+      if (isset($node->field_currently_teaching['und'][0]['value']) && isset($node->original->field_currently_teaching['und'][0]['value']) && ($node->field_currently_teaching['und'][0]['value'] != $node->original->field_currently_teaching['und'][0]['value'])) {
+        $emp_base_change['current_teach'] = $node->field_currently_teaching['und'][0]['value'];
+      }
+      elseif (isset($node->field_currently_teaching['und'][0]['value']) && !isset($node->original->field_currently_teaching['und'][0]['value'])) {
+        $emp_base_change['current_teach'] = $node->field_currently_teaching['und'][0]['value'];
+      }
+      elseif (!isset($node->field_currently_teaching['und'][0]['value']) && isset($node->original->field_currently_teaching['und'][0]['value'])) {
+        $emp_base_change['current_teach'] = "0";
+      }
+    }
+    if (isset($node->field_ul_employee['und'][0]['value']) || isset($node->original->field_ul_employee['und'][0]['value'])) {
+      if (isset($node->field_ul_employee['und'][0]['value']) && isset($node->original->field_ul_employee['und'][0]['value']) && ($node->field_ul_employee['und'][0]['value'] != $node->original->field_ul_employee['und'][0]['value'])) {
+        $emp_base_change['ul_employee'] = $node->field_ul_employee['und'][0]['value'];
+      }
+      elseif (isset($node->field_ul_employee['und'][0]['value']) && !isset($node->original->field_ul_employee['und'][0]['value'])) {
+        $emp_base_change['ul_employee'] = $node->field_ul_employee['und'][0]['value'];
+      }
+      elseif (!isset($node->field_ul_employee['und'][0]['value']) && isset($node->original->field_ul_employee['und'][0]['value'])) {
+        $emp_base_change['ul_employee'] = "0";
+      }
+    }
+    if (isset($node->field_oils_employee['und'][0]['value']) || isset($node->original->field_oils_employee['und'][0]['value'])) {
+      if (isset($node->field_oils_employee['und'][0]['value']) && isset($node->original->field_oils_employee['und'][0]['value']) && ($node->field_oils_employee['und'][0]['value'] != $node->original->field_oils_employee['und'][0]['value'])) {
+        $emp_base_change['oils_employee'] = $node->field_oils_employee['und'][0]['value'];
+      }
+      elseif (isset($node->field_oils_employee['und'][0]['value']) && !isset($node->original->field_oils_employee['und'][0]['value'])) {
+        $emp_base_change['oils_employee'] = $node->field_oils_employee['und'][0]['value'];
+      }
+      elseif (!isset($node->field_oils_employee['und'][0]['value']) && isset($node->original->field_oils_employee['und'][0]['value'])) {
+        $emp_base_change['oils_employee'] = "0";
+      }
+    }
+    if ($node->body) {
+      if (isset($node->body['und'][0]['value'])) {
+        $new = $node->body['und'][0]['value'];
+      }
+      else {
+        $new = "";
+      }
+      if (isset($node->original->body['und'][0]['value'])) {
+        $old = $node->original->body['und'][0]['value'];
+      }
+      else {
+        $old = "";
+      }
+      if ($new != $old) {
+//         $emp_base_change['blurb'] = htmlentities($new, ENT_QUOTES, 'UTF-8');
+// This line errors out on remote db update because of apostrophes
+	$emp_base_change['blurb'] = str_replace("'", "\'", $new);
+      }
+    }
+    // Has basic info changed?  If so, update.
+    if (isset($emp_base_change) && !empty($emp_base_change)) {
+      $count = count($emp_base_change) - 1;
+      $iteration = 0;
+      $set_clause = "";
+      foreach ($emp_base_change as $field => $value) {
+        $set_clause .= " $field = '$value'";
+        if ($iteration < $count) {
+          $set_clause .= ", ";
+        }
+        $iteration++;
+      }
+      if ((isset($set_clause) && $set_clause != "") && (isset($remote_id) && is_numeric($remote_id))) {
+        $emp_base_q = "update {employee} set $set_clause where id = $remote_id";
+      }
+
+      db_set_active('remote');
+      $result = db_query($emp_base_q);
+      db_set_active();
+    }
+
+    if (isset($node->field_subjects) || isset($node->original->field_subjects)) {
+      $subjects_names = array();
+      if (isset($node->field_subjects['und']) && !empty($node->field_subjects['und'])) {
+        foreach ($node->field_subjects['und'] as $index => $tid) {
+          // Get subjects tid, name
+          $term = taxonomy_term_load($tid['tid']);
+          $subjects_names[$term->name] = $tid['tid'];
+        }
+      }
+      // Get remote subjects info
+      $subjects_q = "select sub_id as id, sub as name from {subs}";
+      $remote_subjects = get_remote_list($subjects_q);
+      // Use gathered $subjects_names and $remote_subjects
+      if (isset($subjects_names) && isset($remote_subjects)) {
+        $remote_ids = array(); // Holds remote subs ids that should be in relation table
+        foreach ($subjects_names as $local_subjects_name => $subjects_name) {
+          // Check if all locals are in remote list
+          if (!array_key_exists($local_subjects_name, $remote_subjects)) {
+            // Insert into remote subs table
+            $insert_subjects_q = "insert into {subs} (sub) values ('$local_subjects_name')";
+            db_set_active('remote');
+            $insert_subjects_r = db_query($insert_subjects_q);
+            // Get id and add to remote relation table
+            $remote_id_q = "select sub_id from {subs} where sub = '$local_subjects_name'";
+            $remote_id_r = db_query($remote_id_q);
+            db_set_active();
+            if ($remote_id_r) {
+              foreach ($remote_id_r as $row) {
+                $remote_ids[$local_subjects_name] = $row->sub_id;
+              }
+            }
+          }
+          else {
+            $remote_ids[$local_subjects_name] = $remote_subjects[$local_subjects_name];
+          }
+        }
+        // Make sure $remote_ids matches remote relation table
+        $remote_relations_q = "select emp2subjects_id, subjects_id from {emp2subjects} where emp_id = '$remote_id'";
+        db_set_active('remote');
+        $remote_relations_r = db_query($remote_relations_q);
+        db_set_active();
+        $remote_relations = array();
+        if ($remote_relations_r) {
+          foreach ($remote_relations_r as $row) {
+            $remote_relations[$row->emp2subjects_id] = $row->subjects_id;
+          }
+        }
+        foreach ($remote_ids as $name => $subjects_id) {
+          if (array_search($subjects_id, $remote_relations)) {
+            unset($remote_relations[array_search($subjects_id, $remote_relations)]);
+            unset($remote_ids[$name]);
+          }
+        }
+        if (isset($remote_ids) && !empty($remote_ids)) { // Need to be added to remote relation table
+          foreach ($remote_ids as $name => $id) {
+            if (is_numeric($id)) {
+              $add_row_q = "insert into {emp2subjects} (emp_id, subjects_id) values ($remote_id, $id)";
+              db_set_active('remote');
+              $add_row_r = db_query($add_row_q);
+              db_set_active();
+            }
+          }
+        }
+        if (isset($remote_relations) && !empty($remote_relations)) { // Need to be removed from remote relation table
+          foreach ($remote_relations as $emp2subjects_row_id => $subjects_id) {
+            $delete_emp2subjects_q = "delete from {emp2subjects} where emp2subjects_id = $emp2subjects_row_id";
+            db_set_active('remote');
+            $delete_row_r = db_query($delete_emp2subjects_q);
+            db_set_active();
+          }
+        }
+      }
+    }
+
+
+    if (isset($node->field_research_interests) || isset($node->original->field_research_interests)) {
+      $research_interests_names = array();
+      if (isset($node->field_research_interests['und']) && !empty($node->field_research_interests['und'])) {
+        foreach ($node->field_research_interests['und'] as $index => $tid) {
+          // Get research interests tid, name
+          $term = taxonomy_term_load($tid['tid']);
+          $research_interests_names[$term->name] = $tid['tid'];
+        }
+      }
+      // Get remote research interests info
+      $research_interests_q = "select research_id as id, research as name from {research}";
+      $remote_research_interests = get_remote_list($research_interests_q);
+      // Use gathered $research_interests_names and $remote_research_interests
+      if (isset($research_interests_names) && isset($remote_research_interests)) {
+        $remote_ids = array(); // Holds remote research ids that should be in relation table
+        foreach ($research_interests_names as $local_research_interests_name => $research_interests_name) {
+          // Check if all locals are in remote list
+          if (!array_key_exists($local_research_interests_name, $remote_research_interests)) {
+            // Insert into remote research table
+            $insert_research_interests_q = "insert into {research} (research) values ('$local_research_interests_name')";
+            db_set_active('remote');
+            $insert_research_interests_r = db_query($insert_research_interests_q);
+            // Get id and add to remote relation table
+            $remote_id_q = "select research_id from {research} where research = '$local_research_interests_name'";
+            $remote_id_r = db_query($remote_id_q);
+            db_set_active();
+            if ($remote_id_r) {
+              foreach ($remote_id_r as $row) {
+                $remote_ids[$local_research_interests_name] = $row->research_id;
+              }
+            }
+          }
+          else {
+            $remote_ids[$local_research_interests_name] = $remote_research_interests[$local_research_interests_name];
+          }
+        }
+        // Make sure $remote_ids matches remote relation table
+        $remote_relations_q = "select emp2research_id, research_id from {emp2research} where emp_id = '$remote_id'";
+        db_set_active('remote');
+        $remote_relations_r = db_query($remote_relations_q);
+        db_set_active();
+        $remote_relations = array();
+        if ($remote_relations_r) {
+          foreach ($remote_relations_r as $row) {
+            $remote_relations[$row->emp2research_id] = $row->research_id;
+          }
+        }
+        foreach ($remote_ids as $name => $research_id) {
+          if (array_search($research_id, $remote_relations)) {
+            unset($remote_relations[array_search($research_id, $remote_relations)]);
+            unset($remote_ids[$name]);
+          }
+        }
+        if (isset($remote_ids) && !empty($remote_ids)) { // Need to be added to remote relation table
+          foreach ($remote_ids as $name => $id) {
+            if (is_numeric($id)) {
+              $add_row_q = "insert into {emp2research} (emp_id, research_id) values ($remote_id, $id)";
+              db_set_active('remote');
+              $add_row_r = db_query($add_row_q);
+              db_set_active();
+            }
+          }
+        }
+        if (isset($remote_relations) && !empty($remote_relations)) { // Need to be removed from remote relation table
+          foreach ($remote_relations as $emp2research_row_id => $research_id) {
+            $delete_emp2research_q = "delete from {emp2research} where emp2research_id = $emp2research_row_id";
+            db_set_active('remote');
+            $delete_row_r = db_query($delete_emp2research_q);
+            db_set_active();
+          }
+        }
+      }
+    }
+
+
+    if (isset($node->field_job_title) || isset($node->original->field_job_title)) {
+      $job_title_names = array();
+      if (isset($node->field_job_title['und']) && !empty($node->field_job_title['und'])) {
+        foreach ($node->field_job_title['und'] as $index => $tid) {
+          // Get job title tid, name
+          $term = taxonomy_term_load($tid['tid']);
+          $job_title_names[$term->name] = $tid['tid'];
+        }
+      }
+      // Get remote job title info
+      $job_title_q = "select title_id as id, title as name from {title}";
+      $remote_job_title = get_remote_list($job_title_q);
+      // Use gathered $job_title_names and $remote_job_title
+      if (isset($job_title_names) && isset($remote_job_title)) {
+        $remote_ids = array(); // Holds remote title ids that should be in relation table
+        foreach ($job_title_names as $local_job_title_name => $job_title_name) {
+          // Check if all locals are in remote list
+          if (!array_key_exists($local_job_title_name, $remote_job_title)) {
+            // Insert into remote title table
+            $insert_job_title_q = "insert into {title} (title) values ('$local_job_title_name')";
+            db_set_active('remote');
+            $insert_job_title_r = db_query($insert_job_title_q);
+            // Get id and add to remote relation table
+            $remote_id_q = "select title_id from {title} where title = '$local_job_title_name'";
+            $remote_id_r = db_query($remote_id_q);
+            db_set_active();
+            if ($remote_id_r) {
+              foreach ($remote_id_r as $row) {
+                $remote_ids[$local_job_title_name] = $row->title_id;
+              }
+            }
+          }
+          else {
+            $remote_ids[$local_job_title_name] = $remote_job_title[$local_job_title_name];
+          }
+        }
+        // Make sure $remote_ids matches remote relation table
+        $remote_relations_q = "select emp2title_id, title_id from {emp2title} where emp_id = '$remote_id'";
+        db_set_active('remote');
+        $remote_relations_r = db_query($remote_relations_q);
+        db_set_active();
+        $remote_relations = array();
+        if ($remote_relations_r) {
+          foreach ($remote_relations_r as $row) {
+            $remote_relations[$row->emp2title_id] = $row->title_id;
+          }
+        }
+        foreach ($remote_ids as $name => $title_id) {
+          if (array_search($title_id, $remote_relations)) {
+            unset($remote_relations[array_search($title_id, $remote_relations)]);
+            unset($remote_ids[$name]);
+          }
+        }
+        if (isset($remote_ids) && !empty($remote_ids)) { // Need to be added to remote relation table
+          foreach ($remote_ids as $name => $id) {
+            if (is_numeric($id)) {
+              $add_row_q = "insert into {emp2title} (emp_id, title_id) values ($remote_id, $id)";
+              db_set_active('remote');
+              $add_row_r = db_query($add_row_q);
+              db_set_active();
+            }
+          }
+        }
+        if (isset($remote_relations) && !empty($remote_relations)) { // Need to be removed from remote relation table
+          foreach ($remote_relations as $emp2title_row_id => $title_id) {
+            $delete_emp2title_q = "delete from {emp2title} where emp2title_id = $emp2title_row_id";
+            db_set_active('remote');
+            $delete_row_r = db_query($delete_emp2title_q);
+            db_set_active();
+          }
+        }
+      }
+    }
+
+
+    if (isset($node->field_faculty_rank) || isset($node->original->field_faculty_rank)) {
+      $faculty_rank_names = array();
+      if (isset($node->field_faculty_rank['und']) && !empty($node->field_faculty_rank['und'])) {
+        foreach ($node->field_faculty_rank['und'] as $index => $tid) {
+          // Get faculty rank tid, name
+          $term = taxonomy_term_load($tid['tid']);
+          $faculty_rank_names[$term->name] = $tid['tid'];
+        }
+      }
+      // Get remote faculty rank info
+      $faculty_rank_q = "select rank_id as id, rank as name from {rank}";
+      $remote_faculty_rank = get_remote_list($faculty_rank_q);
+      // Use gathered $faculty_rank_names and $remote_faculty_rank
+      if (isset($faculty_rank_names) && isset($remote_faculty_rank)) {
+        $remote_ids = array(); // Holds remote rank ids that should be in relation table
+        foreach ($faculty_rank_names as $local_faculty_rank_name => $faculty_rank_name) {
+          // Check if all locals are in remote list
+          if (!array_key_exists($local_faculty_rank_name, $remote_faculty_rank)) {
+            // Insert into remote rank table
+            $insert_faculty_rank_q = "insert into {rank} (rank) values ('$local_faculty_rank_name')";
+            db_set_active('remote');
+            $insert_faculty_rank_r = db_query($insert_faculty_rank_q);
+            // Get id and add to remote relation table
+            $remote_id_q = "select rank_id from {rank} where rank = '$local_faculty_rank_name'";
+            $remote_id_r = db_query($remote_id_q);
+            db_set_active();
+            if ($remote_id_r) {
+              foreach ($remote_id_r as $row) {
+                $remote_ids[$local_faculty_rank_name] = $row->rank_id;
+              }
+            }
+          }
+          else {
+            $remote_ids[$local_faculty_rank_name] = $remote_faculty_rank[$local_faculty_rank_name];
+          }
+        }
+        // Make sure $remote_ids matches remote relation table
+        $remote_relations_q = "select emp2rank_id, rank_id from {emp2rank} where emp_id = '$remote_id'";
+        db_set_active('remote');
+        $remote_relations_r = db_query($remote_relations_q);
+        db_set_active();
+        $remote_relations = array();
+        if ($remote_relations_r) {
+          foreach ($remote_relations_r as $row) {
+            $remote_relations[$row->emp2rank_id] = $row->rank_id;
+          }
+        }
+        foreach ($remote_ids as $name => $rank_id) {
+          if (array_search($rank_id, $remote_relations)) {
+            unset($remote_relations[array_search($rank_id, $remote_relations)]);
+            unset($remote_ids[$name]);
+          }
+        }
+        if (isset($remote_ids) && !empty($remote_ids)) { // Need to be added to remote relation table
+          foreach ($remote_ids as $name => $id) {
+            if (is_numeric($id)) {
+              $add_row_q = "insert into {emp2rank} (emp_id, rank_id) values ($remote_id, $id)";
+              db_set_active('remote');
+              $add_row_r = db_query($add_row_q);
+              db_set_active();
+            }
+          }
+        }
+        if (isset($remote_relations) && !empty($remote_relations)) { // Need to be removed from remote relation table
+          foreach ($remote_relations as $emp2rank_row_id => $rank_id) {
+            $delete_emp2rank_q = "delete from {emp2rank} where emp2rank_id = $emp2rank_row_id";
+            db_set_active('remote');
+            $delete_row_r = db_query($delete_emp2rank_q);
+            db_set_active();
+          }
+        }
+      }
+    }
+
+
+    if (isset($node->field_web_sites) || isset($node->original->field_web_sites)) {
+      $web_sites_names = array();
+      if (isset($node->field_web_sites['und']) && !empty($node->field_web_sites['und'])) {
+        foreach ($node->field_web_sites['und'] as $index => $tid) {
+          // Get web sites tid, name
+          $term = taxonomy_term_load($tid['tid']);
+          $web_sites_names[$term->name] = $tid['tid'];
+        }
+      }
+      // Get remote web sites info
+      $web_sites_q = "select websites_id as id, website as name from {websites}";
+      $remote_web_sites = get_remote_list($web_sites_q);
+      // Use gathered $web_sites_names and $remote_web_sites
+      if (isset($web_sites_names) && isset($remote_web_sites)) {
+        $remote_ids = array(); // Holds remote web site ids that should be in relation table
+        foreach ($web_sites_names as $local_web_site_name => $web_site_name) {
+          // Check if all locals are in remote list
+          if (!array_key_exists($local_web_site_name, $remote_web_sites)) {
+            // Insert into remote websites table
+            $insert_web_sites_q = "insert into {websites} (website) values ('$local_web_site_name')";
+            db_set_active('remote');
+            $insert_web_site_r = db_query($insert_web_sites_q);
+            // Get id and add to remote relation table
+            $remote_id_q = "select websites_id from {websites} w, {emp2websites} ew where w.website = '$local_web_site_name' and ew.emp_id = $remote_id and ew.websites_id = w.websites_id";
+            $remote_id_r = db_query($remote_id_q);
+            db_set_active();
+            if ($remote_id_r) {
+              foreach ($remote_id_r as $row) {
+                $remote_ids[$local_web_site_name] = $row->websites_id;
+              }
+            }
+          }
+          else {
+            $remote_ids[$local_web_site_name] = $remote_web_sites[$local_web_site_name];
+          }
+        }
+        // Make sure $remote_ids matches remote relation table
+        $remote_relations_q = "select emp2websites_id, websites_id from {emp2websites} where emp_id = '$remote_id'";
+        db_set_active('remote');
+        $remote_relations_r = db_query($remote_relations_q);
+        db_set_active();
+        $remote_relations = array();
+        if ($remote_relations_r) {
+          foreach ($remote_relations_r as $row) {
+            $remote_relations[$row->emp2websites_id] = $row->websites_id;
+          }
+        }
+        foreach ($remote_ids as $name => $web_site_id) {
+          if (array_search($web_site_id, $remote_relations)) {
+            unset($remote_relations[array_search($web_site_id, $remote_relations)]);
+            unset($remote_ids[$name]);
+          }
+        }
+        if (isset($remote_ids) && !empty($remote_ids)) { // Need to be added to remote relation table
+          foreach ($remote_ids as $name => $id) {
+            if (is_numeric($id)) {
+              $add_row_q = "insert into {emp2websites} (emp_id, websites_id) values ($remote_id, $id)";
+              db_set_active('remote');
+              $add_row_r = db_query($add_row_q);
+              db_set_active();
+            }
+          }
+        }
+        if (isset($remote_relations) && !empty($remote_relations)) { // Need to be removed from remote relation table
+          foreach ($remote_relations as $emp2website_row_id => $web_site_id) {
+            $delete_emp2websites_q = "delete from {emp2websites} where emp2websites_id = $emp2website_row_id";
+            $delete_websites_q = "delete from {websites} where websites_id = $web_site_id";
+            db_set_active('remote');
+            $delete_row_r = db_query($delete_emp2websites_q);
+            $delete_row_r = db_query($delete_websites_q);
+            db_set_active();
+          }
+        }
+      }
+    }
+
+
+    if (isset($node->field_department) || isset($node->original->field_department)) {
+      $dept_names = array();
+      if (isset($node->field_department['und']) && !empty($node->field_department['und'])) {
+        foreach ($node->field_department['und'] as $index => $tid) {
+          // Get dept. tid, name
+          $term = taxonomy_term_load($tid['tid']);
+          $dept_names[$term->name] = $tid['tid'];
+        }
+      }
+      // Get remote dept. info
+      $dept_q = "select dept_id as id, dept as name from {dept}";
+      $remote_depts = get_remote_list($dept_q);
+      // Use gathered $dept_name and $remote_depts
+      if (isset($dept_names) && isset($remote_depts)) {
+        $remote_ids = array(); // Holds remote dept. ids that should be in relation table
+        foreach ($dept_names as $local_dept_name => $depname) {
+          // Check if all locals are in remote list
+          if (!array_key_exists($local_dept_name, $remote_depts)) {
+            // Insert into remote department table
+            $insert_dept_q = "insert into {dept} (dept) values ('$local_dept_name')";
+            db_set_active('remote');
+            $insert_dept_r = db_query($insert_dept_q);
+            // Get id and add to remote relation table
+            $remote_id_q = "select dept_id from {dept} where dept = '$local_dept_name'";
+            $remote_id_r = db_query($remote_id_q);
+            db_set_active();
+            if ($remote_id_r) {
+              foreach ($remote_id_r as $row) {
+                $remote_ids[$local_dept_name] = $row->dept_id;
+              }
+            }
+          }
+          else {
+            $remote_ids[$local_dept_name] = $remote_depts[$local_dept_name];
+          }
+        }
+        // Make sure $remote_ids matches remote relation table
+        $remote_relations_q = "select emp2dept_id, dept_id from {emp2dept} where emp_id = '$remote_id'";
+        db_set_active('remote');
+        $remote_relations_r = db_query($remote_relations_q);
+        db_set_active();
+        $remote_relations = array();
+        if ($remote_relations_r) {
+          foreach ($remote_relations_r as $row) {
+            $remote_relations[$row->emp2dept_id] = $row->dept_id;
+          }
+        }
+        foreach ($remote_ids as $name => $dept_id) {
+          if (array_search($dept_id, $remote_relations)) {
+            unset($remote_relations[array_search($dept_id, $remote_relations)]);
+            unset($remote_ids[$name]);
+          }
+        }
+        if (isset($remote_ids) && !empty($remote_ids)) { // Need to be added to remote relation table
+          foreach ($remote_ids as $name => $id) {
+            if (is_numeric($id)) {
+              $add_row_q = "insert into {emp2dept} (emp_id, dept_id) values ($remote_id, $id)";
+              db_set_active('remote');
+              $add_row_r = db_query($add_row_q);
+              db_set_active();
+            }
+          }
+        }
+        if (isset($remote_relations) && !empty($remote_relations)) { // Need to be removed from remote relation table
+          foreach ($remote_relations as $emp2dept_row_id => $dep_id) {
+            $delete_row_q = "delete from {emp2dept} where emp2dept_id = $emp2dept_row_id";
+            db_set_active('remote');
+            $delete_row_r = db_query($delete_row_q);
+            db_set_active();
+          }
+        }
+      }
+    }
+  }
+
+  if ($node->type == 'employee_location' && isset($node->nid) && ($update_rights['admin'] == 'true' || $update_rights['user'] == 'true')) {
+    // Get local location info
+    $emploc = entity_metadata_wrapper('node', $node);
+    if ($emploc->title) {
+      $title = $emploc->title->value();
+    }
+    if ($emploc->field_location->tid->value()) {
+      $loc = $emploc->field_location->tid->value();
+    }
+    else {
+      $loc = "";
+    }
+    if ($emploc->field_location->name->value()) {
+      $local_location_name = $emploc->field_location->name->value();
+    }
+    else {
+      $local_location_name = "";
+    }
+    if ($emploc->field_phone_number) {
+      $local_telephone = $emploc->field_phone_number->value();
+    }
+    else {
+      $local_telephone = "";
+    }
+    if ($emploc->field_room_number) {
+      $local_room = $emploc->field_room_number->value();
+    }
+    else {
+      $local_room = "";
+    }
+
+    // Get remote info
+    db_set_active('remote');
+    $query = "select * from {box}, {employee}, {emp2box}, {loc} where employee.id = emp2box.emp_id and emp2box.box_id = box.box_id and box.loc_id = loc.loc_id and employee.id = $title";
+    $remote_loc = db_query($query)->fetchAssoc();
+    db_set_active();
+    // Set remote info
+    if (isset ($remote_loc['loc']) && !empty($remote_loc['loc'])) {
+      $remote_location_name = $remote_loc['loc'];
+    }
+    else {
+      $remote_location_name = "";
+    }
+    if (isset ($remote_loc['telephone']) && !empty($remote_loc['telephone'])) {
+      $remote_telephone = $remote_loc['telephone'];
+    }
+    else {
+      $remote_telephone = "";
+    }
+    if (isset ($remote_loc['room']) && !empty($remote_loc['room'])) {
+      $remote_room = $remote_loc['telephone'];
+    }
+    else {
+      $remote_room = "";
+    }
+    if (isset ($remote_loc['box_id']) && !empty($remote_loc['box_id'])) {
+      $remote_box_id = $remote_loc['box_id'];
+    }
+    else {
+      $remote_box_id = "";
+    }
+
+    // All local and remote vars are now set, either w/ actual values or ""
+    // Compare info, if changed update
+    // Location first
+    $box_array = array();
+    if ($local_location_name != $remote_location_name) {
+      // Get remote locations info
+      db_set_active('remote');
+      $remotes = db_query('select * from {loc}');
+      db_set_active();
+      $remote_locations_array = array();
+      foreach ($remotes as $key => $val) {
+        $remote_locations_array["$val->loc"] = $val->loc_id;
+      }
+      // Set remote location id, creating it first if necessary
+      if (!isset($remote_locations_array[$local_location_name]) || !is_numeric($remote_locations_array[$local_location_name])) {
+        db_set_active('remote');
+        $new_remote_loc_q = "insert into {loc} (loc) values ('$local_location_name')";
+        $new_remote_loc = db_query($new_remote_loc_q);
+        $new_id_q = "select loc_id from {loc} where loc = '$local_location_name'";
+        $new_id = db_query($new_id_q);
+        db_set_active();
+        if ($new_id) {
+          foreach ($new_id as $key => $val) {
+            $remote_loc_id = $val->loc_id;
+          }
+        }
+      }
+      else {
+        $remote_loc_id = $remote_locations_array[$local_location_name];
+      }
+      $box_array['loc_id'] = $remote_loc_id;
+    }
+    // Room number $remote_room $local_room
+    if ($local_room != $remote_room) {
+      $box_array['room'] = $local_room;
+    }
+    // Telephone $remote_telephone $local_telephone
+    if ($local_telephone != $remote_telephone) {
+      $box_array['telephone'] = $local_telephone;
+    }
+    // If $box_array has elements, remote data needs updated
+    if (isset($box_array) && !empty($box_array) && isset($remote_box_id) && is_numeric($remote_box_id)) {
+      $set_phrase = "";
+      $count = 1;
+      foreach ($box_array as $field => $val) {
+        $set_phrase .= "$field = '$val'";
+        if ($count < count($box_array)) {
+          $set_phrase .= ", ";
+        } else {
+          $set_phrase .= " ";
+        }
+        $count++;
+      }
+      $update_q = "update {box} set $set_phrase where box_id = $remote_box_id";
+      db_set_active('remote');
+      $update_r = db_query($update_q);
+      db_set_active();
+    }
+
+  }
+
+}
+
+// Intercept user login to set ownership of appropriate nodes
+/**
+ * @file
+ * Set ownership of appropriate nodes.
+ */
+/**
+ * Implements hook_user_login().
+ */
+
+function staffdb_user_login(&$edit, $account) {
+  $user_id = $account->uid;
+  $user_mail = $account->mail;
+  $query = new EntityFieldQuery();
+
+  $query->entityCondition('entity_type', 'node')
+    ->entityCondition('bundle', 'employee')
+    ->fieldCondition('field_email', 'value', $user_mail)
+    ->addMetaData('account', user_load(1));
+
+  $result = $query->execute();
+
+  $emp_node = db_query("select e.entity_id as emp_entity_id, n.nid as emp_loc_entity_id from {field_data_field_email} e, {field_data_field_remote_id} r, {node} n where e.bundle = 'employee' and e.field_email_value = '$user_mail' and r.entity_id = e.entity_id and field_remote_id_value = n.title");
+
+  if (isset($emp_node)) {
+    $employee_node = array();
+    foreach ($emp_node as $val) {
+      $update = db_query("update {node} set uid = '$user_id' where nid in ('$val->emp_entity_id', '$val->emp_loc_entity_id')");
+    }
+  }
+
+}
+
+
+/**
+ * Implements hook_cron().
+ */
+
+function staffdb_cron() {
+  watchdog('staffdb_debug', 'Cron function triggered');
+  start_import_update_employees();
+}
+
+
+/**
+ * Implements hook_form_alter().
+ */
+
+function staffdb_form_alter(&$form, &$form_state, $form_id) {
+  if (isset($form['#node']) && $form_id == $form['#node']->type .'_node_form' && $form['type']['#value'] == 'employee') { //
+    $form['#after_build'][] = 'staffdb_employee_after_build';
+  }
+  if (isset($form['#node']) && $form_id == $form['#node']->type .'_node_form' && $form['type']['#value'] == 'employee_location') {
+    $form['#after_build'][] = 'staffdb_employee_location_after_build';
+  }
+}
+
+/**
+ * Prevent some fields from being edited.  These fields should be changed in the
+ * remote database, and require approval of administration or other authorization.
+ *
+ * @param $form
+ * @param $form_state
+ * @return mixed
+ */
+function staffdb_employee_after_build($form, &$form_state) {
+//  dpm($form);
+//  dpm($form_state);
+  if (isset($form['field_remote_id'])) {
+    $form['field_remote_id']['und'][0]['value']['#attributes']['readonly'] = 'readonly';
+    $form_state['values']['field_remote_id']['und'][0]['value'] = $form['field_remote_id']['und'][0]['value']['#default_value'];
+  }
+  if (isset($form['field_picture'])) {
+    $form['field_picture']['und'][0]['value']['#attributes']['readonly'] = 'readonly';
+    $form_state['values']['field_picture']['und'][0]['value'] = $form['field_picture']['und'][0]['value']['#default_value'];
+  }
+  if (isset($form['field_email'])) {
+    $form['field_email']['und'][0]['value']['#attributes']['readonly'] = 'readonly';
+    $form_state['values']['field_email']['und'][0]['value'] = $form['field_email']['und'][0]['value']['#default_value'];
+  }
+  if (isset($form['field_classes'])) {
+    $form['field_classes']['und']['#attributes'] = array('onkeypress' => 'return false;');
+  }
+  if (isset($form['field_department'])) {
+    $form['field_department']['und']['#attributes'] = array('onkeypress' => 'return false;');
+  }
+  if (isset($form['field_physical_location'])) {
+    $form['field_physical_location']['und']['#options'] = array_intersect_key($form['field_physical_location']['und']['#options'], array_flip($form['field_physical_location']['und']['#default_value']));
+  }
+  if (isset($form['field_dean_s_cabinet_member'])) {
+    $form['field_dean_s_cabinet_member']['und']['#attributes'] = array('onkeypress' => 'return false;', 'onclick' => 'return false;');
+  }
+  if (isset($form['field_visible'])) {
+    $form['field_visible']['und']['#attributes'] = array('onkeypress' => 'return false;', 'onclick' => 'return false;');
+  }
+  return $form;
+}
+
+function staffdb_employee_location_after_build($form, &$form_state) {
+  if (isset($form['title']['#default_value'])) {
+    $form['title']['#attributes']['readonly'] = 'readonly';
+    $form_state['values']['title'] = $form['title']['#default_value'];
+  }
+
+  return $form;
+}

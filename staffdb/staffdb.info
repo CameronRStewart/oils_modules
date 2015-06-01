@@ -1,0 +1,12 @@
+name = UL Database Interaction Module
+description = A module that interacts with regular MySQL databases kept by the UL.
+core = 7.x
+package = UNM University Libraries
+; Any files that must be included in every page:
+files[]="staffdb.module,functions.php"
+
+;Add extra CSS:
+stylesheets[all][] = staffdb.css
+
+; Add linked button to config page from modules page
+configure = admin/config/content/staffdb

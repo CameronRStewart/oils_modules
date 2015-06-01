@@ -1,0 +1,6 @@
+name = OILS Programs of Study
+description = Imports Programs of Study for each degree type.
+core = 7.x
+package = UNM University Libraries
+version = 7.x-1.0
+configure = admin/config/services/program-of-study
