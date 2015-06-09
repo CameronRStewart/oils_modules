@@ -177,6 +177,152 @@ function staffdb_directory() {
 }
 
 
+/**
+ * Implements hook_block_info().
+ */
+function staffdb_block_info() {
+  $blocks = array();
+
+  $blocks['undergrad_advisor'] = array(
+    'info' => t('Undergraduate Advisor Contact Info'),
+  );
+
+  $blocks['grad_advisor'] = array(
+    'info' => t('Graduate Advisor Contact Info'),
+  );
+
+  return $blocks;
+}
+
+
+/**
+ * Function _get_advisor_info
+ *
+ * @param null $jobtitle
+ * @return render array of advisor contact information
+ */
+function _get_advisor_info($jobtitle = NULL){
+
+  $query = db_query("
+    select n.nid, n.title,
+    ph.field_phone_number_value,
+    em.field_email_value,
+    t.name
+    from {node} n
+        left join {field_data_field_remote_id} f on n.nid = f.entity_id
+        left join {field_data_field_oils_employee} emp on n.nid = emp.entity_id
+        left join {field_data_field_physical_location} loc on n.nid = loc.entity_id
+        left join {field_data_field_phone_number} ph on loc.field_physical_location_target_id = ph.entity_id
+        left join {field_data_field_email} em on n.nid = em.entity_id
+        left join {field_data_field_job_title} jt on n.nid = jt.entity_id
+        left join {taxonomy_term_data} t on t.tid = jt.field_job_title_tid
+    where n.type = 'employee' AND
+          emp.field_oils_employee_value = 1 AND
+          lower(t.name) = :jobtitle;", array(':jobtitle' => strtolower($jobtitle)));
+          //lower(t.name) like :jobtitle;", array(':jobtitle' => '%' . db_like(strtolower($jobtitle)) . '%'));
+  $results = $query->fetchAll();
+
+  $advisors = array();
+  foreach($results as $advisor) {
+    $nid = $advisor->nid;
+    $name = $advisor->title;
+    $title = $advisor->name;
+    $email = $advisor->field_email_value;
+    $phone = $advisor->field_phone_number_value;
+
+    $advisors[] = array(
+      'heading3' => array(
+        '#markup'   => t($title),
+        '#prefix'   => '<h3 style="margin:0;">',
+        '#suffix'   => '</h3>'
+      ),
+      'name'  => array(
+        '#markup'   => l($name, "node/{$nid}"),
+        '#prefix'   => '<div>',
+        '#suffix'   => '</div>'
+      ),
+      'phone' => array(
+        '#markup'   => t("(505) {$phone}"),
+        '#prefix'   => '<div>',
+        '#suffix'   => '</div>'
+      ),
+      'email' => array(
+        '#markup'   => l($email, "mailto:{$email}", array('absolute' => TRUE)),
+        '#prefix'   => '<div>',
+        '#suffix'   => '</div>'
+      )
+    );
+  }
+
+  return $advisors;
+}
+
+
+/**
+ * Implements hook_block_view().
+ */
+function staffdb_block_view($delta = '') {
+  $block = array();
+
+  switch ($delta) {
+    case 'undergrad_advisor':
+      $block['subject'] = 'Questions about the Program?';
+      $block['content'] = _get_advisor_info(variable_get('undergrad_advisor_string', t('Undergraduate Program Coordinator')));
+      break;
+    case 'grad_advisor':
+      $block['subject'] = 'Questions about the Program?';
+      $block['content'] = _get_advisor_info(variable_get('grad_advisor_string', t('Graduate Program Coordinator')));
+      break;
+  }
+
+  return $block;
+}
+
+
+/**
+ * Implements hook_block_configure().
+ */
+function staffdb_block_configure($delta = '') {
+  $form = array();
+
+  switch ($delta) {
+    case 'undergrad_advisor':
+      $form['undergrad_advisor_string'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Undergrad Advisor Title'),
+        '#size' => 60,
+        '#description' => t('The title of the undergraduate advisor to display in this block. Will display all people with this title.'),
+        '#default_value' => variable_get('undergrad_advisor_string', t('Undergraduate Program Coordinator')),
+      );
+      break;
+    case 'grad_advisor':
+      $form['grad_advisor_string'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Grad Advisor Title'),
+        '#size' => 60,
+        '#description' => t('The title of the graduate advisor to display in this block. Will display all people with this title.'),
+        '#default_value' => variable_get('grad_advisor_string', t('Graduate Program Coordinator')),
+      );
+      break;
+  }
+
+  return $form;
+}
+
+
+/**
+ * Implements hook_block_save().
+ */
+function staffdb_block_save($delta = '', $edit = array()) {
+  switch ($delta) {
+    case 'undergrad_advisor':
+      variable_set('undergrad_advisor_string', $edit['undergrad_advisor_string']);
+      break;
+    case 'grad_advisor':
+      variable_set('grad_advisor_string', $edit['grad_advisor_string']);
+      break;
+  }
+}
 
 /**
  * Page callback: staffdb import/update
