@@ -24,13 +24,15 @@ function videos_feeds_importer_default() {
         'use_pubsubhubbub' => FALSE,
         'designated_hub' => '',
         'request_timeout' => NULL,
+        'auto_scheme' => 'http',
+        'accept_invalid_cert' => FALSE,
       ),
     ),
     'parser' => array(
       'plugin_key' => 'FeedsXPathParserXML',
       'config' => array(
         'sources' => array(
-          'xpathparser:0' => 'string(media:group/yt:videoid)',
+          'xpathparser:0' => 'string(yt:videoId)',
           'xpathparser:1' => 'string(media:group/media:title)',
           'xpathparser:2' => 'string(media:group/media:description)',
           'xpathparser:3' => 'string(link/@href)',
@@ -56,8 +58,6 @@ function videos_feeds_importer_default() {
         'context' => '//entry',
         'exp' => array(
           'errors' => 0,
-          'tidy' => 0,
-          'tidy_encoding' => 'UTF8',
           'debug' => array(
             'context' => 0,
             'xpathparser:0' => 0,
@@ -139,6 +139,7 @@ function videos_feeds_importer_default() {
         'authorize' => 1,
         'skip_hash_check' => 0,
         'bundle' => 'video',
+        'update_non_existent' => 'skip',
       ),
     ),
     'content_type' => 'youtube_channel',

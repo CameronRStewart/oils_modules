@@ -51,6 +51,15 @@ function videos_image_default_styles() {
         ),
         'weight' => 1,
       ),
+      2 => array(
+        'name' => 'image_crop',
+        'data' => array(
+          'width' => 140,
+          'height' => 101,
+          'anchor' => 'center-center',
+        ),
+        'weight' => 2,
+      ),
     ),
   );
 
@@ -74,7 +83,7 @@ function videos_image_default_styles() {
   $styles['video_thumbnail_340'] = array(
     'label' => 'Video Thumbnail 340',
     'effects' => array(
-      1 => array(
+      3 => array(
         'name' => 'image_scale',
         'data' => array(
           'width' => 340,
@@ -82,6 +91,15 @@ function videos_image_default_styles() {
           'upscale' => 1,
         ),
         'weight' => 1,
+      ),
+      4 => array(
+        'name' => 'image_crop',
+        'data' => array(
+          'width' => 340,
+          'height' => 230,
+          'anchor' => 'center-center',
+        ),
+        'weight' => 2,
       ),
     ),
   );
