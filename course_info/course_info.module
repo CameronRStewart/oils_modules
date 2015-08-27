@@ -56,28 +56,29 @@ function load_course_info_from_web() {
     $college_code = $row->college_code;
     $file = system_retrieve_file($row->url, $destination, FALSE, FILE_EXISTS_REPLACE);
     if ($file) {
-      $reader->open($file);
-      while ($reader->read()) {
-        if ($reader->name == 'college' && $reader->getAttribute('code') == $college_code) {
-          break;
+        $reader->open($file);
+        while ($reader->read()) {
+            if ($reader->name == 'college' && $reader->getAttribute('code') == $college_code) {
+                $tree = $reader->readInnerXml();
+                if (isset($tree) && !empty($tree)) {
+                    $data = simplexml_load_string($tree);
+                    $data = xmlToArray($data);
+                    /*
+                    * For the time being, we are starting with the creation
+                    * of Departments and moving downwards through the tree.
+                    */
+                    $entity_nid_list = buildEntityLists();
+                    buildCourseInfoEntities($data['department'], 'department', $entity_nid_list);
+                    //$reader->next('college');
+                }
+                else {
+                    drupal_set_message('The values provided did not yield any data.  Please re-enter your college code or URL.');
+                    return "XML Not Reloaded";
+                }
+                $reader->next('college');
+            }
         }
-      }
-      $tree = $reader->readInnerXml();
-      if (isset($tree) && !empty($tree)) {
-        $data = simplexml_load_string($tree);
-        $data = xmlToArray($data);
-        /*
-        * For the time being, we are starting with the creation
-        * of Departments and moving downwards through the tree.
-        */
-        $entity_nid_list = buildEntityLists();
-        buildCourseInfoEntities($data['department'], 'department', $entity_nid_list);
         return "XML Loaded";
-      }
-      else {
-        drupal_set_message('The values provided did not yield any data.  Please re-enter your college code or URL.');
-        return "XML Not Reloaded";
-      }
     }
     else {
       $msg = "Unable to retrieve " . $row->url . ", course nodes will not be updated.";
