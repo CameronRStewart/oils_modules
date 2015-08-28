@@ -58,6 +58,7 @@ function load_course_info_from_web() {
     if ($file) {
         $reader->open($file);
         while ($reader->read()) {
+            // We have found the node in which the data we want lies.
             if ($reader->name == 'college' && $reader->getAttribute('code') == $college_code) {
                 $tree = $reader->readInnerXml();
                 if (isset($tree) && !empty($tree)) {
@@ -69,7 +70,6 @@ function load_course_info_from_web() {
                     */
                     $entity_nid_list = buildEntityLists();
                     buildCourseInfoEntities($data['department'], 'department', $entity_nid_list);
-                    //$reader->next('college');
                 }
                 else {
                     drupal_set_message('The values provided did not yield any data.  Please re-enter your college code or URL.');
@@ -640,7 +640,10 @@ function buildCourseInfoEntities($data, $type, $entity_nid_list) {
 
 }
 
-
+/*
+ * This function creates a basic entity and
+ * returns its metadata wrapper.
+ */
 function createEntity($type) {
   global $user;
   $values = array(
